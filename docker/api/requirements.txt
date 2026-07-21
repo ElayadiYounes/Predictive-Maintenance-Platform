@@ -1,0 +1,46 @@
+
+# Framework
+# ===================================
+fastapi>=0.115
+
+uvicorn[standard]>=0.30
+
+
+# Validation
+# ===================================
+pydantic>=2.6
+
+pydantic-settings>=2.2
+
+
+# Database
+# ===================================
+
+PyHive>=0.7
+
+thrift>=0.20
+
+thrift-sasl>=0.4
+
+
+# Authentication (si besoin) utilisé par la suit
+# ===================================
+python-jose[cryptography]>=3.3
+
+passlib[bcrypt]>=1.7
+
+
+# Email (envoyer les alerts)
+# ===================================
+fastapi-mail>=1.4
+
+
+# HTTP Client
+# ===================================
+httpx>=0.27
+
+# Utilities
+# ===================================
+python-dotenv>=1.0
+
+loguru>=0.7

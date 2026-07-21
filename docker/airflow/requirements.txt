@@ -1,0 +1,25 @@
+
+# Airflow Providers
+# ===================================
+apache-airflow-providers-apache-spark==4.7.1
+apache-airflow-providers-amazon==8.19.0
+
+# AWS / MinIO
+# ===================================
+boto3>=1.34
+
+# Configuration
+# ===================================
+pydantic>=2.6
+pydantic-settings>=2.2
+python-dotenv>=1.0
+
+
+# Logging
+# ===================================
+loguru>=0.7
+
+
+# HTTP
+# ===================================
+requests>=2.31

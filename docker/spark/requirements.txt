@@ -1,0 +1,13 @@
+#BIB PRICIPALE
+pyspark==3.5.2
+
+# DATA HANDLING
+pandas>=2.1.0
+pyarrow>=14.0.0
+numpy>=1.24.0
+
+# UTILITIES
+pydantic>=2.6
+pydantic-settings>=2.2
+python-dotenv>=1.0.0
+loguru>=0.7.0

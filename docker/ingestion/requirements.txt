@@ -1,0 +1,20 @@
+# SQL Extract
+SQLAlchemy>=2.0
+PyMySQL>=1.1
+
+# DATA HANDLING
+pandas>=2.1.0
+pyarrow>=14.0.0
+numpy>=1.24.0
+
+# STORAGE (MINIO / S3)
+boto3>=1.34.0
+minio>=7.2.0
+
+# UTILITIES
+pydantic>=2.6.0
+pydantic-settings==2.2.1
+python-dotenv>=1.0.0
+loguru>=0.7.0
+
+
