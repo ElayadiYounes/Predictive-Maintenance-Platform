@@ -9,20 +9,23 @@ USER root
 # System dependencies
 # ==================================================
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
     curl \
     ca-certificates \
-    bash \
     tini \
+    gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
 
 # Environment variables
 # ==================================================
-ENV HADOOP_AWS_VERSION=3.3.4 \
+ENV SPARK_HOME=/opt/spark \
+    HADOOP_AWS_VERSION=3.3.4 \
     AWS_SDK_VERSION=1.12.262 \
     PYTHONUNBUFFERED=1 \
     PYSPARK_PYTHON=python3 \
-    PYSPARK_DRIVER_PYTHON=python3
+    PYSPARK_DRIVER_PYTHON=python3 \
+    PATH="${SPARK_HOME}/bin:${PATH}"
 
 
 # Install Python dependencies

@@ -7,13 +7,8 @@
     <!-- ====================================================== -->
 
     <property>
-        <name>hive.metastore.uris</name>
-        <value>thrift://hive-metastore:9083</value>
-    </property>
-
-    <property>
         <name>hive.metastore.warehouse.dir</name>
-        <value>s3a://warehouse/</value>
+        <value>s3a://gold/warehouse/</value>
     </property>
 
     <!-- ====================================================== -->
@@ -22,7 +17,7 @@
 
     <property>
         <name>javax.jdo.option.ConnectionURL</name>
-        <value>jdbc:postgresql://postgres:5432/hive_metastore</value>
+        <value>jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_HIVE_DATABASE}</value>
     </property>
 
     <property>
@@ -54,6 +49,11 @@
         <value>true</value>
     </property>
 
+    <property>
+        <name>hive.metastore.event.db.notification.api.auth</name>
+        <value>false</value>
+    </property>
+
     <!-- ====================================================== -->
     <!-- MinIO (S3A) -->
     <!-- ====================================================== -->
@@ -61,6 +61,11 @@
     <property>
         <name>fs.s3a.endpoint</name>
         <value>http://minio:9000</value>
+    </property>
+
+    <property>
+        <name>fs.s3a.aws.credentials.provider</name>
+        <value>org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider</value>
     </property>
 
     <property>

@@ -8,6 +8,17 @@ echo "Spark Node"
 echo "Role : ${SPARK_MODE}"
 echo "====================================="
 
+echo "Generating Spark configuration..."
+
+for file in \
+    /opt/spark/conf/spark-defaults.conf \
+    /opt/spark/conf/hive-site.xml
+do
+    tmp=$(mktemp)
+    envsubst < "$file" > "$tmp"
+    mv "$tmp" "$file"
+done
+
 echo "Java version:"
 java -version
 
@@ -35,11 +46,11 @@ case "${SPARK_MODE}" in
 
         echo "Starting Spark Master..."
 
-        exec spark-class \
-            org.apache.spark.deploy.master.Master \
-            --host 0.0.0.0 \
-            --port 7077 \
-            --webui-port 8080
+        spark-class \
+              org.apache.spark.deploy.master.Master \
+              --host "${SPARK_MASTER_HOST}" \
+              --port "${SPARK_MASTER_PORT}" \
+              --webui-port "${SPARK_MASTER_WEBUI_PORT}"
         ;;
 
     worker)
@@ -53,7 +64,7 @@ case "${SPARK_MODE}" in
 
         exec spark-class \
             org.apache.spark.deploy.worker.Worker \
-            --webui-port 8081 \
+            --webui-port "${SPARK_WORKER_WEBUI_PORT}" \
             "${SPARK_MASTER_URL}"
         ;;
 

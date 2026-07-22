@@ -40,6 +40,9 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+# macOS
+.DS_Store
+
 # Fichiers de configuration des éditeurs de code
 .vscode/
 .idea/
