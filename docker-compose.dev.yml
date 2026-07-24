@@ -61,14 +61,6 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       EMAIL_FROM: ${EMAIL_FROM}
 
-    command:
-      - uvicorn
-      - app.main:app
-      - --host
-      - 0.0.0.0
-      - --port
-      - "8000"
-
     logging:
       driver: json-file
       options:
@@ -118,12 +110,7 @@ services:
       MODELS_BUCKET: ${MODELS_BUCKET}
 
     volumes:
-
       - ./jobs/ml:/app/jobs
-
-    command:
-      - python
-      - jobs/train.py
 
     logging:
       driver: json-file
@@ -131,8 +118,15 @@ services:
         max-size: "20m"
         max-file: "5"
 
+    command: tail -f /dev/null
+
+
 
   airflow-init:
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
+
     image: ${PROJECT_NAME}/airflow:${APP_ENV}
 
     restart: "no"
@@ -152,20 +146,19 @@ services:
 
       AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER}
       AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
+      AIRFLOW_ADMIN_FIRSTNAME: ${AIRFLOW_ADMIN_FIRSTNAME}
+      AIRFLOW_ADMIN_LASTNAME: ${AIRFLOW_ADMIN_LASTNAME}
+      AIRFLOW_ADMIN_EMAIL: ${AIRFLOW_ADMIN_EMAIL}
 
-    command: >
-      bash -c "
-        airflow db migrate &&
-        airflow users create
-        --username ${AIRFLOW_ADMIN_USER}
-        --password ${AIRFLOW_ADMIN_PASSWORD}
-        --firstname ${AIRFLOW_ADMIN_FIRSTNAME}
-        --lastname ${AIRFLOW_ADMIN_LASTNAME}
-        --role Admin
-        --email ${AIRFLOW_ADMIN_EMAIL}
-      "
+    entrypoint: >
+      /bin/sh -c "airflow db migrate &&
+      airflow users create --username ${AIRFLOW_ADMIN_USER} --password ${AIRFLOW_ADMIN_PASSWORD} --firstname ${AIRFLOW_ADMIN_FIRSTNAME} --lastname ${AIRFLOW_ADMIN_LASTNAME} --role Admin --email ${AIRFLOW_ADMIN_EMAIL} &&
+      echo 'Airflow init done'"
 
   airflow-webserver:
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
     image: ${PROJECT_NAME}/airflow:${APP_ENV}
 
     restart: unless-stopped
@@ -198,6 +191,10 @@ services:
 
 
   airflow-scheduler:
+
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
 
     image: ${PROJECT_NAME}/airflow:${APP_ENV}
 
@@ -300,6 +297,10 @@ services:
         max-size: "20m"
         max-file: "5"
 
+    command: tail -f /dev/null
+
+
+
   minio:
     image: minio/minio:RELEASE.2025-04-22T22-12-26Z
 
@@ -340,7 +341,7 @@ services:
         max-file: "5"
 
   postgres:
-    image: postgres:16
+    image: postgres:15
 
     restart: unless-stopped
 
@@ -349,6 +350,9 @@ services:
 
     ports:
       - "${POSTGRES_PORT}:5432"
+
+    env_file:
+      - .env.dev
 
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -363,7 +367,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER}"
+          "pg_isready -h localhost -U ${POSTGRES_USER} -d postgres"
         ]
       interval: 10s
       timeout: 5s
@@ -389,6 +393,8 @@ services:
       - ocp-network
 
     environment:
+      MINIO_API_PORT: ${MINIO_API_PORT}
+
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
 
@@ -403,7 +409,6 @@ services:
     entrypoint:
       - /bin/sh
       - /init.sh
-
 
   hive-metastore:
     build:
@@ -576,6 +581,9 @@ services:
       - "${SPARK_MASTER_PORT}:7077"
       - "${SPARK_MASTER_WEBUI_PORT}:8080"
 
+    env_file:
+      - .env.dev
+
     environment:
 
       APP_ENV: ${APP_ENV}
@@ -583,6 +591,8 @@ services:
       SPARK_MODE: master
 
       SPARK_MASTER_HOST: spark-master
+      SPARK_MASTER_PORT: 7077
+      SPARK_MASTER_WEBUI_PORT: 8080
 
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
@@ -592,11 +602,7 @@ services:
       HIVE_WAREHOUSE_DIR: ${HIVE_WAREHOUSE_DIR}
 
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "nc -z localhost 7077"
-        ]
+      test: [ "CMD-SHELL", "curl -fs http://localhost:8080 > /dev/null || exit 1" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -615,6 +621,9 @@ services:
     networks:
       - ocp-network
 
+    env_file:
+      - .env.dev
+
     environment:
 
       APP_ENV: ${APP_ENV}
@@ -622,6 +631,8 @@ services:
       SPARK_MODE: worker
 
       SPARK_MASTER_URL: spark://spark-master:${SPARK_MASTER_PORT}
+      SPARK_MASTER_WEBUI_PORT: 8080
+      SPARK_WORKER_WEBUI_PORT: 8081
 
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
@@ -642,6 +653,9 @@ services:
     networks:
       - ocp-network
 
+    env_file:
+      - .env.dev
+
     environment:
 
       APP_ENV: ${APP_ENV}
@@ -649,7 +663,8 @@ services:
       SPARK_MODE: worker
 
       SPARK_MASTER_URL: spark://spark-master:${SPARK_MASTER_PORT}
-
+      SPARK_MASTER_WEBUI_PORT: 8080
+      SPARK_WORKER_WEBUI_PORT: 8082
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
 

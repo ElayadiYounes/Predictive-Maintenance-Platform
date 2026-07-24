@@ -6,26 +6,34 @@ echo "========================================"
 echo "Installing Apache Hive ${HIVE_VERSION}"
 echo "========================================"
 
-curl --fail \
-     --location \
-     --silent \
-     --show-error \
-     "https://archive.apache.org/dist/hive/hive-${HIVE_VERSION}/apache-hive-${HIVE_VERSION}-bin.tar.gz" \
-     -o /tmp/hive.tar.gz
+# ========================================
+# Check required file
+# ========================================
+
+test -f "/tmp/apache-hive-${HIVE_VERSION}-bin.tar.gz"
+
+# ========================================
+# Install Hive
+# ========================================
 
 mkdir -p /opt
 
-tar -xzf /tmp/hive.tar.gz -C /opt
+tar -xzf "/tmp/apache-hive-${HIVE_VERSION}-bin.tar.gz" \
+    -C /opt
 
-mv /opt/apache-hive-${HIVE_VERSION}-bin "${HIVE_HOME}"
+test -d "/opt/apache-hive-${HIVE_VERSION}-bin"
 
-rm -f /tmp/hive.tar.gz
+mv "/opt/apache-hive-${HIVE_VERSION}-bin" \
+   "${HIVE_HOME}"
 
-if [ ! -d "${HIVE_HOME}" ]; then
-    echo "Hive installation failed."
-    exit 1
-fi
+test -d "${HIVE_HOME}"
+
+# ========================================
+# Cleanup
+# ========================================
+
+rm -f "/tmp/apache-hive-${HIVE_VERSION}-bin.tar.gz"
 
 echo "========================================"
-echo "Apache Hive installed successfully."
+echo "Apache Hive installed successfully"
 echo "========================================"

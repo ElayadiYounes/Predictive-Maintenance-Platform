@@ -6,18 +6,42 @@ echo "========================================"
 echo "Installing PostgreSQL JDBC Driver"
 echo "========================================"
 
-curl --fail \
-     --location \
-     --silent \
-     --show-error \
-     "https://jdbc.postgresql.org/download/postgresql-${POSTGRES_JDBC_VERSION}.jar" \
-     -o "${HIVE_HOME}/lib/postgresql.jar"
+# ========================================
+# Check required file
+# ========================================
 
-if [ ! -f "${HIVE_HOME}/lib/postgresql.jar" ]; then
-    echo "PostgreSQL JDBC Driver installation failed."
-    exit 1
-fi
+test -f "/tmp/postgresql-${POSTGRES_JDBC_VERSION}.jar"
+
+# ========================================
+# Remove old PostgreSQL drivers
+# ========================================
+
+rm -f "${HIVE_HOME}"/lib/postgresql-*.jar
+rm -f "${HIVE_HOME}"/lib/postgresql.jar
+
+# ========================================
+# Install PostgreSQL JDBC Driver
+# ========================================
+
+cp "/tmp/postgresql-${POSTGRES_JDBC_VERSION}.jar" \
+   "${HIVE_HOME}/lib/"
+
+# ========================================
+# Create symbolic link
+# ========================================
+
+ln -sf \
+"${HIVE_HOME}/lib/postgresql-${POSTGRES_JDBC_VERSION}.jar" \
+"${HIVE_HOME}/lib/postgresql.jar"
+
+# ========================================
+# Cleanup
+# ========================================
+
+rm -f "/tmp/postgresql-${POSTGRES_JDBC_VERSION}.jar"
 
 echo "========================================"
-echo "PostgreSQL JDBC Driver installed."
+echo "PostgreSQL JDBC Driver installed"
 echo "========================================"
+
+ls -lh "${HIVE_HOME}"/lib/postgresql*

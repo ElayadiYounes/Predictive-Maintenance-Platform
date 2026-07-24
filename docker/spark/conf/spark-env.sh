@@ -3,7 +3,7 @@
 # ==================================================
 # Java
 # ==================================================
-export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export JAVA_HOME=/opt/java/openjdk
 
 # ==================================================
 # Spark
@@ -13,5 +13,5 @@ export SPARK_HOME=/opt/spark
 export PYSPARK_PYTHON=python3
 export PYSPARK_DRIVER_PYTHON=python3
 
-export SPARK_MASTER_HOST=${SPARK_MASTER_HOST}
-export SPARK_MASTER_PORT=${SPARK_MASTER_PORT}
+export SPARK_MASTER_HOST=${SPARK_MASTER_HOST:-spark-master}
+export SPARK_MASTER_PORT=${SPARK_MASTER_PORT:-7077}

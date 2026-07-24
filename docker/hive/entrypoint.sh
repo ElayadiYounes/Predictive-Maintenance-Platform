@@ -2,27 +2,9 @@
 
 set -e
 
-echo "==========================================="
-echo "OCP Predictive Maintenance Platform"
-echo "Hive Metastore"
-echo "Environment : ${APP_ENV}"
-echo "==========================================="
-
-echo "Generating hive-site.xml..."
-
-tmp=$(mktemp)
-
-envsubst < /opt/hive/conf/hive-site.xml > "$tmp"
-
-mv "$tmp" /opt/hive/conf/hive-site.xml
-
-echo "Configuration generated."
-
-echo "Waiting for PostgreSQL..."
-#!/bin/bash
-
-set -e
-
+export HADOOP_HOME="${HADOOP_HOME:-/opt/hadoop}"
+export PATH="${HIVE_HOME}/bin:${HADOOP_HOME}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export HADOOP_CLASSPATH="${HADOOP_HOME}/share/hadoop/tools/lib/*"
 echo "==========================================="
 echo "OCP Predictive Maintenance Platform"
 echo "Hive"
@@ -40,6 +22,16 @@ mv "${tmp}" "${HIVE_HOME}/conf/hive-site.xml"
 
 echo "Configuration generated."
 
+echo "======================================"
+echo "POSTGRES_HOST=${POSTGRES_HOST}"
+echo "POSTGRES_PORT=${POSTGRES_PORT}"
+echo "POSTGRES_USER=${POSTGRES_USER}"
+echo "POSTGRES_HIVE_DATABASE=${POSTGRES_HIVE_DATABASE}"
+echo "MINIO_HOST=${MINIO_HOST}"
+echo "MINIO_API_PORT=${MINIO_API_PORT}"
+echo "HIVE_SERVICE=${HIVE_SERVICE}"
+echo "======================================"
+
 echo "Waiting for PostgreSQL..."
 
 until nc -z "${POSTGRES_HOST}" "${POSTGRES_PORT}"
@@ -48,14 +40,32 @@ do
 done
 
 echo "PostgreSQL is ready."
+echo "======================================"
+echo "Checking Hive installation..."
+echo "HIVE_HOME=${HIVE_HOME}"
+echo "PATH=${PATH}"
+
 
 case "${HIVE_SERVICE}" in
 
     metastore)
+      echo "Listing PostgreSQL drivers..."
+
+      find ${HIVE_HOME}/lib -name "*postgres*"
+
+       echo
+       echo "Jar version :"
+
+       ls -lh ${HIVE_HOME}/lib/postgresql.jar
+       echo "Searching old postgres drivers"
+
+       find ${HIVE_HOME}/lib -name "*jdbc*"
+
+      find ${HIVE_HOME}/lib -name "*postgresql*"
 
         echo "Checking Hive schema..."
 
-        if schematool \
+        if  "${HIVE_HOME}/bin/schematool" \
             -dbType "${HIVE_METASTORE_DB_TYPE}" \
             -info > /dev/null 2>&1
         then
@@ -63,14 +73,38 @@ case "${HIVE_SERVICE}" in
         else
             echo "Initializing Hive schema..."
 
-            schematool \
+            "${HIVE_HOME}/bin/schematool" \
                 -dbType "${HIVE_METASTORE_DB_TYPE}" \
                 -initSchema
         fi
 
         echo "Starting Hive Metastore..."
+        echo "Checking S3A jars..."
 
-        exec hive --service metastore
+         ls -l ${HADOOP_HOME}/share/hadoop/tools/lib | grep aws || true
+
+         ls -l ${HADOOP_HOME}/share/hadoop/tools/lib | grep bundle || true
+
+         ls -l ${HADOOP_HOME}/share/hadoop/tools/lib | grep hadoop-aws || true
+         echo "HADOOP_CLASSPATH=${HADOOP_CLASSPATH}"
+          echo "===== DEBUG ====="
+
+          echo "HADOOP_HOME=$HADOOP_HOME"
+
+          echo "PATH=$PATH"
+
+          ls -l /opt
+
+          ls -l /opt/hadoop
+
+          ls -l /opt/hadoop/bin
+
+         which hadoop || true
+
+         echo "================="
+          hadoop classpath
+
+        exec "${HIVE_HOME}/bin/hive" --service metastore
         ;;
 
     server2)
@@ -86,38 +120,13 @@ case "${HIVE_SERVICE}" in
 
         echo "Starting HiveServer2..."
 
-        exec hive --service hiveserver2
+        exec "${HIVE_HOME}/bin/hive" --service hiveserver2
         ;;
 
     *)
 
-        echo "ERROR: Unknown HIVE_SERVICE : ${HIVE_SERVICE}"
+        echo "ERROR: Unknown HIVE_SERVICE: ${HIVE_SERVICE}"
         exit 1
         ;;
 
 esac
-until nc -z "${POSTGRES_HOST}" "${POSTGRES_PORT}"
-do
-    sleep 2
-done
-
-echo "PostgreSQL is ready."
-
-echo "Checking Hive schema..."
-
-if schematool \
-    -dbType "${HIVE_METASTORE_DB_TYPE}" \
-    -info > /dev/null 2>&1
-then
-    echo "Hive schema already exists."
-else
-    echo "Initializing Hive schema..."
-
-    schematool \
-        -dbType "${HIVE_METASTORE_DB_TYPE}" \
-        -initSchema
-fi
-
-echo "Starting Hive Metastore..."
-
-exec hive --service metastore

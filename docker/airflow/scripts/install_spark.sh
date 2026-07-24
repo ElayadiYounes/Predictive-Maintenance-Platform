@@ -6,26 +6,34 @@ echo "======================================"
 echo "Installing Apache Spark ${SPARK_VERSION}"
 echo "======================================"
 
-curl --fail --location --silent --show-error \
-https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz \
--o /tmp/spark.tgz
+ARCHIVE="/tmp/spark-${SPARK_VERSION}-bin-hadoop${SPARK_HADOOP_PROFILE}.tgz"
 
-tar -xzf /tmp/spark.tgz -C /opt
+# ========================================
+# Check required file
+# ========================================
 
-if [ ! -d "/opt/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}" ]; then
-    echo "Spark extraction failed."
-    exit 1
-fi
+test -f "${ARCHIVE}"
 
-mv "/opt/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}" "${SPARK_HOME}"
+# ========================================
+# Install Spark
+# ========================================
+
+mkdir -p /opt
+
+tar -xzf "${ARCHIVE}" -C /opt
+
+test -d "/opt/spark-${SPARK_VERSION}-bin-hadoop${SPARK_HADOOP_PROFILE}"
+
+mv \
+"/opt/spark-${SPARK_VERSION}-bin-hadoop${SPARK_HADOOP_PROFILE}" \
+"${SPARK_HOME}"
+
+rm -f "${ARCHIVE}"
 
 chown -R airflow:root "${SPARK_HOME}"
-
-rm /tmp/spark.tgz
-
-echo "Spark version:"
-spark-submit --version
 
 echo "======================================"
 echo "Apache Spark installed successfully"
 echo "======================================"
+
+"${SPARK_HOME}/bin/spark-submit" --version

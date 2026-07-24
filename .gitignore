@@ -16,9 +16,9 @@ logs/ml/*
 *.jar
 docker/spark/jars/**/*.jar
 
-# Ignorer l'archive tarball Spark téléchargée localement pour Airflow
-docker/airflow/*.tgz
-docker/airflow/*.tar.gz
+# Ignorer l'archive tarball téléchargée localement
+*.tgz
+*.tar.gz
 
 # Environnements virtuels locaux (si un membre de l'équipe en crée un)
 .venv/
@@ -53,6 +53,10 @@ Desktop.ini
 *.swp
 
 #conservation des dossiers vides
+!third_party/README.md
+!third_party/download.sh
+!third_party/download.ps1
+!third_party/**/.gitkeep
 !airflow/dags/.gitkeep
 !api/.gitkeep
 !configs/.gitkeep

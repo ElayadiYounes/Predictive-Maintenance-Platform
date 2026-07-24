@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     tini \
     gettext-base \
+    python3 \
+    python3-pip \
+    python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -32,14 +35,21 @@ ENV SPARK_HOME=/opt/spark \
 # ==================================================
 COPY docker/spark/requirements.txt /tmp/requirements.txt
 
-RUN python -m pip install --upgrade pip && \
-    pip install \
+RUN python3 -m pip install --upgrade pip && \
+    python3 -m pip install \
         --disable-pip-version-check \
         --no-cache-dir \
         -r /tmp/requirements.txt && \
     rm /tmp/requirements.txt
 
 
+# ==================================================
+# Copy third-party dependencies
+# ==================================================
+COPY third_party/aws/hadoop-aws-3.3.4.jar /tmp/
+COPY third_party/aws/aws-java-sdk-bundle-1.12.262.jar /tmp/
+
+# ==================================================
 # Install Spark connectors
 # ==================================================
 COPY docker/spark/scripts/install_connectors.sh /tmp/install_connectors.sh
@@ -48,7 +58,6 @@ RUN chmod +x /tmp/install_connectors.sh && \
     /tmp/install_connectors.sh && \
     rm /tmp/install_connectors.sh
 
-
 # Spark configuration
 # ==================================================
 COPY docker/spark/conf/spark-defaults.conf /opt/spark/conf/
@@ -56,7 +65,8 @@ COPY docker/spark/conf/spark-env.sh /opt/spark/conf/
 COPY docker/spark/conf/log4j2.properties /opt/spark/conf/
 COPY docker/spark/conf/hive-site.xml /opt/spark/conf/
 
-RUN chmod +x /opt/spark/conf/spark-env.sh
+RUN chmod +x /opt/spark/conf/spark-env.sh && \
+    chown -R spark:spark /opt/spark/conf
 
 
 # Entrypoint

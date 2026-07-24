@@ -17,7 +17,10 @@ RUN python -m pip install --upgrade pip && \
     --no-cache-dir \
     -r /tmp/requirements.txt
 
-RUN useradd --create-home --uid 1004 mluser
+COPY jobs/ml /app/jobs
+
+RUN useradd --create-home --uid 1004 mluser && \
+    chown -R mluser:mluser /app
 
 ENV PYTHONUNBUFFERED=1 \
     APP_ENV=dev \

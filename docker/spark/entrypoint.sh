@@ -45,8 +45,11 @@ case "${SPARK_MODE}" in
     master)
 
         echo "Starting Spark Master..."
+        echo "+++++++Verification++++++++"
+        echo "SPARK_MASTER_HOST=${SPARK_MASTER_HOST}"
+        echo "SPARK_MASTER_PORT=${SPARK_MASTER_PORT}"
 
-        spark-class \
+        exec spark-class \
               org.apache.spark.deploy.master.Master \
               --host "${SPARK_MASTER_HOST}" \
               --port "${SPARK_MASTER_PORT}" \
@@ -61,7 +64,9 @@ case "${SPARK_MODE}" in
         fi
 
         echo "Starting Spark Worker..."
-
+         echo "+++++++Verification++++++++"
+        echo "SPARK_WORKER_WEBUI_PORT=${SPARK_WORKER_WEBUI_PORT}"
+        echo "SPARK_MASTER_URL=${SPARK_MASTER_URL}"
         exec spark-class \
             org.apache.spark.deploy.worker.Worker \
             --webui-port "${SPARK_WORKER_WEBUI_PORT}" \
