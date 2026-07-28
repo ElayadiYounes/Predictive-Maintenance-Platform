@@ -278,6 +278,9 @@ services:
     networks:
       - ocp-network
 
+    env_file:
+      - .env.dev
+
     environment:
 
       APP_ENV: ${APP_ENV}
@@ -308,6 +311,10 @@ services:
       options:
         max-size: "20m"
         max-file: "5"
+
+    volumes:
+      - ./jobs:/app/jobs
+      - ./logs:/app/logs
 
     command: tail -f /dev/null
 

@@ -69,7 +69,8 @@ class MySQLClient:
 
             dataframe = pd.read_sql(
                 sql=query,
-                con=self.engine
+                con=self.engine,
+                parse_dates=["date"],
             )
 
             logger.info(f"Table '{table_name}' chargée ({len(dataframe)} lignes).")
