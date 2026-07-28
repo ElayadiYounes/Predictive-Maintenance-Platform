@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import SecretStr
 from loguru import logger
 
 
@@ -39,23 +40,34 @@ class Settings(BaseSettings):
     MYSQL_DATABASE : str
 
     MYSQL_USER : str
-    MYSQL_PASSWORD : str
+    MYSQL_PASSWORD : SecretStr
 
     MYSQL_CHARSET : str = "utf8mb4"
+
+    @property
+    def MYSQL_URL(self) -> str:
+        return (
+            f"mysql+pymysql://"
+            f"{self.MYSQL_USER}:"
+            f"{self.MYSQL_PASSWORD.get_secret_value()}@"
+            f"{self.MYSQL_HOST}:{self.MYSQL_PORT}/"
+            f"{self.MYSQL_DATABASE}"
+            f"?charset={self.MYSQL_CHARSET}"
+        )
 
 
     #######################################
     # MINIO (DATA LAKE)
     #######################################
 
-    MINIO_ENDPOINT : str = "http: // minio: 9000"
+    MINIO_ENDPOINT : str
 
     MINIO_API_PORT : int = 9000
 
     MINIO_CONSOLE_PORT : int = 9001
 
     MINIO_ROOT_USER : str
-    MINIO_ROOT_PASSWORD : str
+    MINIO_ROOT_PASSWORD : SecretStr
 
     BRONZE_BUCKET : str
     SILVER_BUCKET : str
@@ -63,6 +75,19 @@ class Settings(BaseSettings):
     MODELS_BUCKET : str
 
 
+    # ==========================================
+    # DATABASE & CATALOG (POSTGRESQL & HIVE)
+    # ==========================================
+    POSTGRES_HOST : str = "postgres"
+
+    POSTGRES_PORT : int = 5432
+
+    POSTGRES_HIVE_DATABASE : str
+    POSTGRES_AIRFLOW_DATABASE : str
+
+    POSTGRES_USER : str
+
+    POSTGRES_PASSWORD : SecretStr
 
 
 

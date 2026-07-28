@@ -17,10 +17,12 @@ def get_spark_session(app_name: str) -> SparkSession:
 
             # 1. Activation du catalogue de métadonnées centralisé Hive
             .enableHiveSupport()
+            .config("hive.metastore.uris", settings.HIVE_METASTORE_URI)
+            .config("spark.sql.warehouse.dir",settings.HIVE_WAREHOUSE_DIR)
 
             # 2. Configuration stricte des identifiants sécurisés de votre .env.dev
             .config("spark.hadoop.fs.s3a.access.key", settings.MINIO_ROOT_USER)
-            .config("spark.hadoop.fs.s3a.secret.key", settings.MINIO_ROOT_PASSWORD)
+            .config("spark.hadoop.fs.s3a.secret.key", settings.MINIO_ROOT_PASSWORD.get_secret_value())
 
             # 3. Paramètres d'optimisation complémentaires (Hadoop S3A)
             .config("spark.hadoop.fs.s3a.endpoint", settings.MINIO_ENDPOINT)
@@ -34,6 +36,6 @@ def get_spark_session(app_name: str) -> SparkSession:
         logger.success(f"SparkSession '{app_name}' opérationnelle .")
         return spark
 
-    except Exception as e:
-        logger.critical(f"Échec critique lors de la création de la SparkSession : {e}")
-        raise e
+    except Exception:
+        logger.exception("Impossible de créer la SparkSession.")
+        raise

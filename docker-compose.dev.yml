@@ -40,6 +40,8 @@ services:
 
       APP_ENV: ${APP_ENV}
 
+      SERVICE_NAME: api
+
       # Hive
       HIVE_SERVER_HOST: hive-server
       HIVE_SERVER_PORT: 10000
@@ -90,6 +92,8 @@ services:
     environment:
 
       APP_ENV: ${APP_ENV}
+
+      SERVICE_NAME: ml
 
       # Spark
       SPARK_MASTER_URL: spark://spark-master:${SPARK_MASTER_PORT}
@@ -142,6 +146,8 @@ services:
 
       APP_ENV: ${APP_ENV}
 
+      SERVICE_NAME: airflow
+
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_AIRFLOW_DATABASE}
 
       AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER}
@@ -176,6 +182,8 @@ services:
     environment:
 
       APP_ENV: ${APP_ENV}
+
+      SERVICE_NAME: airflow
 
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_AIRFLOW_DATABASE}
 
@@ -214,6 +222,8 @@ services:
     environment:
 
       APP_ENV: ${APP_ENV}
+
+      SERVICE_NAME: airflow
 
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_AIRFLOW_DATABASE}
 
@@ -271,6 +281,8 @@ services:
     environment:
 
       APP_ENV: ${APP_ENV}
+
+      SERVICE_NAME : ingestion
 
       # MySQL (source)
       MYSQL_HOST: ${MYSQL_HOST}
@@ -588,6 +600,8 @@ services:
 
       APP_ENV: ${APP_ENV}
 
+      SERVICE_NAME : spark
+
       SPARK_MODE: master
 
       SPARK_MASTER_HOST: spark-master
@@ -628,6 +642,8 @@ services:
 
       APP_ENV: ${APP_ENV}
 
+      SERVICE_NAME : spark
+
       SPARK_MODE: worker
 
       SPARK_MASTER_URL: spark://spark-master:${SPARK_MASTER_PORT}
@@ -659,6 +675,8 @@ services:
     environment:
 
       APP_ENV: ${APP_ENV}
+
+      SERVICE_NAME : spark
 
       SPARK_MODE: worker
 

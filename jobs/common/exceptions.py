@@ -1,5 +1,5 @@
 class MaintenancePlatformException(Exception):
-    """Exception de base pour l'ensemble de la plateforme universitaire.
+    """Exception de base pour l'ensemble de la plateforme .
 
     Toutes nos erreurs personnalisées héritent de celle-ci.
     """
@@ -30,5 +30,29 @@ class DataLakeConnectionError(MaintenancePlatformException):
 class DataLakeBucketNotFoundError(MaintenancePlatformException):
     """Levée lorsqu'un bucket requis (ex: raw, curated) n'existe pas."""
     pass
+
+# ==========================================
+# 2. INGESTION & SOURCING EXCEPTIONS
+# ==========================================
+
+class SourceDBConnectionError(MaintenancePlatformException):
+    """Levée lorsque la base de données source est inaccessible."""
+    pass
+
+
+class SourceDBQueryError(MaintenancePlatformException):
+    """Levée lorsqu'une requête SQL échoue."""
+    pass
+
+
+class SourceTableNotFoundError(MaintenancePlatformException):
+    """Levée lorsqu'une table source n'existe pas."""
+    pass
+
+
+class SourceDataExtractionError(MaintenancePlatformException):
+    """Levée lorsqu'une extraction de données échoue."""
+    pass
+
 
 

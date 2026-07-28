@@ -14,20 +14,23 @@ APP_NAME = os.getenv("PROJECT_NAME", "ocp-predictive-maintenance-platform")
 APP_ENV = os.getenv("APP_ENV", "dev").lower()
 
 # Détection de l'étape via les variables d'environnement Docker
-if os.getenv("SPARK_MODE"):
-    log_subfolder = "transformation"
-    log_file_name = "spark_etl.log"
-elif os.getenv("AIRFLOW_HOME") or "airflow" in os.getenv("HOSTNAME", ""):
-    log_subfolder = "orchestration"
-    log_file_name = "airflow_pipeline.log"
-elif os.getenv("PYTHONPATH") and "api" in os.getenv("PYTHONPATH", ""):
-    log_subfolder = "api"
-    log_file_name = "search_api.log"
-else:
-    log_subfolder = "ingestion"
-    log_file_name = "ingestion_run.log"
+SERVICE_NAME = os.getenv("SERVICE_NAME", "ingestion").lower()
+
+LOG_CONFIG = {
+    "ingestion": ("ingestion", "ingestion.log"),
+    "spark": ("spark", "spark.log"),
+    "airflow": ("airflow", "airflow.log"),
+    "api": ("api", "api.log"),
+    "ml": ("ml", "ml.log"),
+}
+
+log_subfolder, log_file_name = LOG_CONFIG.get(
+    SERVICE_NAME,
+    ("misc", "application.log")
+)
 
 LOG_FILE_PATH = LOGS_ROOT / log_subfolder / log_file_name
+LOG_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 # 3. Configuration des formats de sortie
 # Format coloré et ultra-lisible pour la console de développement
