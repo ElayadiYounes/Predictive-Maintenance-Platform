@@ -29,7 +29,7 @@ def extract_inspection() -> None:
         minio_client.upload_dataframe(
             dataframe=df,
             bucket_name=settings.BRONZE_BUCKET,
-            file_name="vibration.parquet",
+            file_name="inspection.parquet",
             prefix="inspection",
         )
 
