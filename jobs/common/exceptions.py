@@ -55,4 +55,12 @@ class SourceDataExtractionError(MaintenancePlatformException):
     pass
 
 
+class DataLakeReadError(MaintenancePlatformException):
+    """levée lorsque Spark n'est pas capable de lire couche bronze"""
+    pass
+
+
+class DataLakeWriteError(MaintenancePlatformException):
+    """levée lorsque Spark n'est pas capable de écrire couche silver"""
+    pass
 
