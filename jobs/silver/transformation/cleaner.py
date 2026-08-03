@@ -68,28 +68,17 @@ class InspectionCleaner:
             f"{missing_id_removed:,}."
         )
 
-        # ==================================================
         # 3. Suppression des lignes sans date
-        # ==================================================
 
-        cleaned_dataframe = cleaned_dataframe.filter(
-            F.col("date").isNotNull()
-        )
+        cleaned_dataframe = cleaned_dataframe.filter(F.col("date").isNotNull())
 
         after_date_count = cleaned_dataframe.count()
 
-        missing_date_removed = (
-                after_id_count - after_date_count
-        )
+        missing_date_removed = (after_id_count - after_date_count)
 
-        logger.info(
-            f"Lignes sans date supprimées : "
-            f"{missing_date_removed:,}."
-        )
+        logger.info(f"Lignes sans date supprimées : {missing_date_removed:,}.")
 
-        # ==================================================
         # 4. Nettoyage des colonnes textuelles
-        # ==================================================
 
         available_text_columns = [
             column
