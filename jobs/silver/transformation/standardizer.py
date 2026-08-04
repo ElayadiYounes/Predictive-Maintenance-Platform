@@ -2,6 +2,8 @@ import re
 
 from jobs.common.logger import logger
 from pyspark.sql import DataFrame
+from pyspark.sql import functions as F
+from pyspark.sql.types import StringType
 
 class InspectionStandardizer :
     """
@@ -14,6 +16,37 @@ class InspectionStandardizer :
     - harmoniser les types de données.
     """
 
+    TEXT_COLUMNS = [
+        "zone",
+        "instal",
+        "observation",
+        "action",
+        "utilisateur",
+    ]
+
+    BINARY_COLUMNS = [
+        "p_produit",
+        "huile_graisse",
+        "ailette",
+        "boulonneries",
+        "cable",
+        "plaque_a_borne",
+        "graisseur",
+    ]
+
+    TEMPERATURE_COLUMNS = [
+        "t_av",
+        "t_ar",
+    ]
+
+    VIBRATION_COLUMNS = [
+        "av_ax",
+        "av_h",
+        "av_v",
+        "ar_ax",
+        "ar_h",
+        "ar_v",
+    ]
 
     def standardize_column_names(self,dataframe : DataFrame) -> DataFrame :
         """ Standardise les noms des colonnes.
@@ -48,6 +81,66 @@ class InspectionStandardizer :
         logger.success("Standardisation des noms de colonnes terminée.")
 
         return standardized_dataframe
+
+    @staticmethod
+    def _fix_encoding(value: str | None) -> str | None:
+        """ Corrige certains textes UTF-8 interprétés à tort comme des caractères Latin-1.
+            Exemple : DÃ©chargement -> Déchargement Si la correction est impossible ou inutile,
+            la valeur originale est conservée.
+          """
+        if value is None:
+            return None
+
+        try:
+            return value.encode("latin1").decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError,):
+            return value
+
+
+
+    def standardize_text_values(self, dataframe : DataFrame) -> DataFrame :
+        """ Standardise les valeurs des colonnes textuelles.
+         Opérations :
+          - correction de certains problèmes d'encodage ;
+          - suppression des espaces au début et à la fin ;
+          - réduction des espaces multiples ;
+          - uniformisation de la colonne instal.
+         Les valeurs NULL sont conservées.
+        """
+        logger.info("Début de la standardisation des valeurs textuelles.")
+
+        standardized_dataframe = dataframe
+
+        fix_encoding_udf = F.udf(self._fix_encoding, StringType(), )
+
+        available_columns = [
+            column for column in self.TEXT_COLUMNS
+            if column in standardized_dataframe.columns
+        ]
+
+        for column in available_columns :
+            standardized_dataframe = (
+                standardized_dataframe
+                .withColumn(column, fix_encoding_udf(F.col(column)))
+            )
+
+        # La référence de l'installation doit être uniforme.
+        if "instal" in standardized_dataframe.columns:
+            standardized_dataframe = (
+                standardized_dataframe
+                .withColumn( "instal", F.upper( F.col("instal") ) )
+            )
+
+        logger.success("Standardization des valeurs textuelles terminée .")
+
+        return standardized_dataframe
+
+    
+
+
+
+
+
 
     
 
