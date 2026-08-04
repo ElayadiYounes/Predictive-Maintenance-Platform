@@ -115,4 +115,10 @@ class InspectionCleaner:
         return cleaned_dataframe
 
 
+    def clean_missing_values(self, dataframe: DataFrame) -> DataFrame:
+        """on va implementer par la suite"""
+        pass
+
+
+
 
