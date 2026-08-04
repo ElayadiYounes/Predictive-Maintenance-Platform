@@ -48,7 +48,8 @@ class InspectionStandardizer :
         "ar_v",
     ]
 
-    def standardize_column_names(self,dataframe : DataFrame) -> DataFrame :
+    @staticmethod
+    def standardize_column_names(dataframe : DataFrame) -> DataFrame :
         """ Standardise les noms des colonnes.
          Règles :
          - conversion en minuscules ;
@@ -191,11 +192,56 @@ class InspectionStandardizer :
                     .withColumn(column, F.col(column).cast("double"), )
                 )
 
+        # Colonnes textuelles
+        for column in self.TEXT_COLUMNS:
+            if column in standardized_dataframe.columns:
+                standardized_dataframe = (
+                    standardized_dataframe
+                    .withColumn(
+                        column,
+                        F.col(column).cast("string"),
+                    )
+                )
+
         logger.success("Standardisation des types de données Terminée")
 
         return standardized_dataframe
 
+    def standardize(self, dataframe: DataFrame) -> DataFrame:
+        """
+        Orchestre l'ensemble des opérations
+        de standardisation des données d'inspection.
 
+        Étapes :
+        1. standardisation des noms des colonnes ;
+        2. standardisation des valeurs textuelles ;
+        3. standardisation des types de données.
+
+        Parameters
+        ----------
+        dataframe : DataFrame
+            DataFrame Spark à standardiser.
+
+        Returns
+        -------
+        DataFrame
+            DataFrame standardisé.
+        """
+
+        if dataframe is None:
+            raise ValueError("Le DataFrame reçu par InspectionStandardizer est None.")
+
+        logger.info("Début du processus complet de standardisation.")
+
+        standardized_dataframe = (self.standardize_column_names(dataframe))
+
+        standardized_dataframe = (self.standardize_text_values(standardized_dataframe))
+
+        standardized_dataframe = (self.standardize_data_types(standardized_dataframe))
+
+        logger.success("Processus complet de standardisation terminé.")
+
+        return standardized_dataframe
 
 
 
