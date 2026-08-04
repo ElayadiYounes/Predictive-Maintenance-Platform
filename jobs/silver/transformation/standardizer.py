@@ -78,7 +78,7 @@ class InspectionStandardizer :
                 .withColumnRenamed(old_name, new_name, )
                 )
 
-        logger.success("Standardisation des noms de colonnes terminée.")
+        logger.success("Standardisation des noms de colonnes Terminée.")
 
         return standardized_dataframe
 
@@ -131,9 +131,75 @@ class InspectionStandardizer :
                 .withColumn( "instal", F.upper( F.col("instal") ) )
             )
 
-        logger.success("Standardization des valeurs textuelles terminée .")
+        logger.success("Standardization des valeurs textuelles Terminée .")
 
         return standardized_dataframe
+
+
+    def standardize_data_types(self, dataframe : DataFrame) -> DataFrame:
+        """
+        Standardise les types de données des colonnes
+        de la table inspection.
+
+        Règles :
+        - id : IntegerType ;
+        - date : TimestampType ;
+        - indicateurs binaires : IntegerType ;
+        - températures : DoubleType ;
+        - vibrations : DoubleType ;
+        - colonnes textuelles : StringType.
+
+        Les valeurs NULL sont conservées.
+        """
+
+        logger.info("Début de la standardisation des types de données .")
+
+        standardized_dataframe = dataframe
+
+        # étape 1 : conversion type id
+        if "id" in standardized_dataframe.columns:
+            standardized_dataframe = (
+                standardized_dataframe
+                .withColumn("id", F.col("id").cast("int"), )
+            )
+        #étape 2 : conversion type date
+        if "date" in standardized_dataframe.columns:
+            standardized_dataframe = (
+            standardized_dataframe
+            .withColumn("date", F.col("date").cast("timestamp"), )
+            )
+        #étape 3 : les indicateur binaires
+        for column in self.BINARY_COLUMNS:
+            if column in standardized_dataframe.columns:
+                standardized_dataframe = (
+                standardized_dataframe
+                .withColumn(column, F.col(column).cast("int"), )
+                )
+        #étape 4 : conversion temperature
+        for column in self.TEMPERATURE_COLUMNS:
+            if column in standardized_dataframe.columns:
+                standardized_dataframe = (
+                    standardized_dataframe
+                    .withColumn(column, F.col(column).cast("double"), )
+                )
+
+        # Vibrations
+        for column in self.VIBRATION_COLUMNS:
+            if column in standardized_dataframe.columns:
+                standardized_dataframe = (
+                    standardized_dataframe
+                    .withColumn(column, F.col(column).cast("double"), )
+                )
+
+        logger.success("Standardisation des types de données Terminée")
+
+        return standardized_dataframe
+
+
+
+
+
+
 
     
 
