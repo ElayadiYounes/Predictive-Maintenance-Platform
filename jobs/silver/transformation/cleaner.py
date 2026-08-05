@@ -5,9 +5,11 @@ from jobs.common.logger import logger
 
 class InspectionCleaner:
 
-    REQUIRED_COLUMNS = [
+    CRITICAL_COLUMNS = [
         "id",
         "date",
+        "zone",
+        "instal",
     ]
 
     TEXT_COLUMNS = [
@@ -17,6 +19,22 @@ class InspectionCleaner:
         "action",
         "utilisateur",
     ]
+
+    BINARY_COLUMNS = [
+        "p_produit",
+        "huile_graisse",
+        "ailette",
+        "boulonneries",
+        "cable",
+        "plaque_a_borne",
+        "graisseur",
+    ]
+
+    TEXT_DEFAULT_VALUES = {
+        "observation": "non renseignee",
+        "action": "aucune action renseignee",
+        "utilisateur": "inconnu",
+    }
 
     def clean(self, dataframe: DataFrame) -> DataFrame:
         """
@@ -116,8 +134,71 @@ class InspectionCleaner:
 
 
     def clean_missing_values(self, dataframe: DataFrame) -> DataFrame:
-        """on va implementer par la suite"""
-        pass
+
+        """
+           Traite les valeurs manquantes des données d'inspection.
+
+           Règles :
+            - suppression des lignes dont une information critique est manquante ;
+            - remplacement des valeurs manquantes des indicateurs binaires par 0 ;
+            - remplacement des valeurs manquantes des champs textuels par une valeur explicite ;
+            - conservation des valeurs manquantes des mesures physiques.
+
+            Les températures et les vibrations ne sont pas imputées dans cette étape afin d'éviter l'introduction de valeurs artificielles.
+        """
+
+        if dataframe is None:
+            raise ValueError("Le DataFrame reçu par clean_missing_values est None.")
+
+        logger.info("Début du traitement des valeurs manquantes.")
+
+        cleaned_dataframe = dataframe
+
+        # Colonnes critiques réellement présentes
+        available_critical_columns = [
+            column for column in self.CRITICAL_COLUMNS
+            if column in cleaned_dataframe.columns
+        ]
+
+        # Suppression des lignes inexploitables
+        if available_critical_columns:
+            rows_before = cleaned_dataframe.count()
+            cleaned_dataframe = (
+                cleaned_dataframe
+                .dropna( subset=available_critical_columns )
+            )
+            rows_after = cleaned_dataframe.count()
+            removed_rows = (rows_before - rows_after)
+            if removed_rows > 0:
+                logger.warning(f"{removed_rows} ligne(s) supprimée(s) à cause de valeurs manquantes dans les colonnes critiques.")
+
+        # Les indicateurs binaires manquants sont considérés comme absents.
+        available_binary_columns = [
+            column for column in self.BINARY_COLUMNS
+            if column in cleaned_dataframe.columns
+        ]
+
+        if available_binary_columns:
+            cleaned_dataframe = (
+            cleaned_dataframe.fillna(0, subset=available_binary_columns, )
+            )
+
+        # Remplacement des valeurs manquantes dans les champs textuels.
+        available_text_defaults = {
+            column: default_value for column, default_value in self.TEXT_DEFAULT_VALUES.items()
+            if column in cleaned_dataframe.columns
+        }
+
+        if available_text_defaults:
+            cleaned_dataframe = (
+                cleaned_dataframe.fillna(available_text_defaults)
+            )
+
+        logger.success("Traitement les Valeurs Manquantes Terminée .")
+
+        return cleaned_dataframe
+
+    #remarque on va par la suite optimiser la performence de ce code avec moins des actions spark (comme count, ...)
 
 
 
