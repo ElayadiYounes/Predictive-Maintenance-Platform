@@ -92,6 +92,158 @@ class InspectionEnricher:
 
         return enriched_dataframe
 
+    def enrich_vibration_features(self, dataframe : DataFrame) -> DataFrame :
+        """
+        Crée des variables dérivées à partir des
+        mesures de vibration avant et arrière.
+
+        Variables créées :
+        - vibration_av_max :
+          vibration maximale côté avant ;
+        - vibration_ar_max :
+          vibration maximale côté arrière ;
+        - vibration_max :
+          vibration maximale parmi les six mesures ;
+        - vibration_av_mean :
+          vibration moyenne côté avant ;
+        - vibration_ar_mean :
+          vibration moyenne côté arrière ;
+        - vibration_mean :
+          vibration moyenne globale ;
+        - vibration_side_difference :
+          différence absolue entre les vibrations
+          moyennes avant et arrière.
+
+        Les mesures originales sont conservées.
+
+        Parameters
+        ----------
+        dataframe : DataFrame
+            DataFrame Spark contenant les données
+            d'inspection.
+
+        Returns
+        -------
+        DataFrame
+            DataFrame enrichi avec les variables
+            dérivées des vibrations.
+        """
+
+        if dataframe is None:
+            raise ValueError("DataFrame reçu par enrich_vibration_features est None.")
+
+        required_columns = (self.REAR_VIBRATION_COLUMNS + self.FRONT_VIBRATION_COLUMNS)
+        missing_columns = [
+            column for column in required_columns
+            if column not in dataframe.columns
+        ]
+        if missing_columns:
+            raise ValueError(f"Colonnes de vibration manquantes : {', '.join(missing_columns)}.")
+
+        enriched_dataframe = (
+            dataframe
+            # Vibration maximale côté avant
+            .withColumn(
+                "vibration_av_max",
+                F.greatest( *[ F.col(column) for column in self.FRONT_VIBRATION_COLUMNS ] ),
+            )
+            # Vibration maximale côté arrière
+            .withColumn(
+                "vibration_ar_max",
+                F.greatest( *[ F.col(column) for column in self.REAR_VIBRATION_COLUMNS ] ),
+            )
+            # Vibration maximale globale
+            .withColumn(
+                "vibration_max",
+                F.greatest( *[ F.col(column) for column in required_columns ] ),
+            )
+            # Vibration moyenne côté avant
+            .withColumn(
+                "vibration_av_mean",
+                ( F.col("av_ax") + F.col("av_h") + F.col("av_v") ) / F.lit(3.0),
+            )
+            # Vibration moyenne côté arrière
+            .withColumn(
+                "vibration_ar_mean",
+                ( F.col("ar_ax") + F.col("ar_h") + F.col("ar_v") ) / F.lit(3.0),
+            )
+        )
+
+    # Calcul de la moyenne globale et de la différence entre les deux côtés.
+        enriched_dataframe = (
+            enriched_dataframe
+            .withColumn(
+                "vibration_mean",
+                ( F.col("av_ax") + F.col("av_h") + F.col("av_v") + F.col("ar_ax") + F.col("ar_h") + F.col("ar_v") ) / F.lit(6.0),
+            )
+            .withColumn(
+                "vibration_side_difference",
+                F.abs(F.col("vibration_av_mean") - F.col("vibration_ar_mean")), )
+        )
+
+        logger.success("L'enrichissement des variables de Vibration Terminé .")
+
+        return enriched_dataframe
+
+    @staticmethod
+    def enrich_temporal_features(dataframe : DataFrame ) -> DataFrame:
+        """
+        Crée des variables temporelles à partir
+        de la colonne date.
+
+        Variables créées :
+        - inspection_year :
+          année de l'inspection ;
+        - inspection_month :
+          mois de l'inspection ;
+        - inspection_day :
+          jour du mois de l'inspection.
+
+        La colonne date originale est conservée.
+
+        Parameters
+        ----------
+        dataframe : DataFrame
+            DataFrame Spark contenant les données
+            d'inspection.
+
+        Returns
+        -------
+        DataFrame
+            DataFrame enrichi avec les variables
+            temporelles.
+        """
+
+        if dataframe is None:
+            raise ValueError("Le DataFrame reçu par enrich_temporal_features est None.")
+
+        logger.info("Début d'enrichissement des variables temporelles .")
+
+        if "date" not in dataframe.columns:
+            raise ValueError("La colonne 'date' est absente du DataFrame.")
+
+        enriched_dataframe = (
+            dataframe
+            .withColumn(
+                "inspection_year",
+                F.year(F.col("date")),
+            )
+            .withColumn(
+                "inspection_month",
+                F.month(F.col("date")),
+            )
+            .withColumn(
+                "inspection_day",
+                F.day(F.col("date")),
+            )
+        )
+        logger.success("Enrichissement des variables temporelles terminé.")
+
+        return enriched_dataframe
+
+    
+
+
 
 
 
