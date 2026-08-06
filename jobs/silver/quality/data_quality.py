@@ -1,6 +1,7 @@
 from pyspark.sql import DataFrame
+from pyspark.sql import functions as F
 from jobs.common.logger import logger
-from jobs.common.exceptions import MissingRequiredColumnError, InvalidSchemaError
+from jobs.common.exceptions import MissingRequiredColumnError, InvalidSchemaError, HighNullRatioError
 from pyspark.sql.types import (IntegerType, DoubleType, StringType, TimestampType)
 
 
@@ -62,6 +63,11 @@ class InspectionDataQuality :
         "ar_h": DoubleType,
         "ar_v": DoubleType,
     }
+    MAX_NULL_RATIO = 0.3
+    NULL_RATIO_EXCLUDED_COLUMNS = [
+        "observation",
+        "action",
+    ]
 
     def validate_required_columns(self,dataframe: DataFrame,) -> None:
         """
@@ -163,4 +169,88 @@ class InspectionDataQuality :
             )
 
         logger.success("Schéma Spark validé.")
+
+
+    def validate_null_ratio(self, dataframe: DataFrame) -> None:
+        """
+        Vérifie que le pourcentage de valeurs
+        manquantes de chaque colonne reste
+        inférieur au seuil autorisé.
+
+        Les colonnes dont le taux de valeurs
+        manquantes dépasse le seuil provoquent
+        une exception.
+
+        Parameters
+        ----------
+        dataframe : DataFrame
+            DataFrame Spark à valider.
+        """
+
+        if dataframe is None:
+            raise ValueError("Le DataFrame reçu est None.")
+
+        logger.info("Validation du taux de valeurs manquantes.")
+
+        total_rows = dataframe.count()
+
+        if total_rows == 0:
+            logger.warning("Le DataFrame est vide.")
+            return
+
+        invalid_columns = []
+
+        columns_to_validate = [
+            column
+            for column in dataframe.columns
+            if column not in self.NULL_RATIO_EXCLUDED_COLUMNS
+        ]
+
+        for column in columns_to_validate:
+
+            null_count = (
+                dataframe
+                .filter(F.col(column).isNull())
+                .count()
+            )
+
+            null_ratio = null_count / total_rows
+
+            logger.debug(
+                f"{column} : "
+                f"{null_count}/{total_rows} "
+                f"({null_ratio:.2%})"
+            )
+
+            if null_ratio > self.MAX_NULL_RATIO:
+                invalid_columns.append(
+                    (
+                        column,
+                        null_count,
+                        null_ratio,
+                    )
+                )
+
+        if invalid_columns:
+            details = "\n".join(
+                (
+                    f"{column} : "
+                    f"{count} valeurs manquantes "
+                    f"({ratio:.2%})"
+                )
+                for column, count, ratio in invalid_columns
+            )
+
+            logger.error(
+                "Le taux de valeurs manquantes dépasse "
+                "le seuil autorisé.\n"
+                + details
+            )
+
+            raise HighNullRatioError(
+                "Le taux de valeurs manquantes est trop élevé.",
+                details,
+            )
+
+        logger.success("Validation du taux de valeurs manquantes terminée.")
 

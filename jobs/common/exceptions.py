@@ -76,3 +76,13 @@ class InvalidSchemaError(MaintenancePlatformException):
     pas au schéma attendu.
     """
     pass
+
+class HighNullRatioError(MaintenancePlatformException):
+    """
+    Une ou plusieurs colonnes présentent
+    un taux de valeurs manquantes
+    supérieur au seuil autorisé.
+    """
+    pass
+
+
