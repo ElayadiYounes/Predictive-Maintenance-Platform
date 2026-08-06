@@ -1,7 +1,7 @@
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from jobs.common.logger import logger
-from jobs.common.exceptions import MissingRequiredColumnError, InvalidSchemaError, HighNullRatioError
+from jobs.common.exceptions import MissingRequiredColumnError, InvalidSchemaError, HighNullRatioError, InvalidNumericRangeError
 from pyspark.sql.types import (IntegerType, DoubleType, StringType, TimestampType)
 
 
@@ -34,6 +34,19 @@ class InspectionDataQuality :
         "action",
         "utilisateur",
     ]
+    TEMPERATURE_COLUMNS = [
+        "t_av",
+        "t_ar",
+    ]
+    VIBRATION_COLUMNS = [
+        "av_ax",
+        "av_h",
+        "av_v",
+        "ar_ax",
+        "ar_h",
+        "ar_v",
+    ]
+
     EXPECTED_SCHEMA = {
         "id": IntegerType,
         "date": TimestampType,
@@ -68,6 +81,13 @@ class InspectionDataQuality :
         "observation",
         "action",
     ]
+
+    #ces valeurs est provisiore je vais valider les vrais valeurs avac l'encadrent
+    TEMPERATURE_MIN = 0
+    TEMPERATURE_MAX = 120
+
+    VIBRATION_MIN = 0
+    VIBRATION_MAX = 50
 
     def validate_required_columns(self,dataframe: DataFrame,) -> None:
         """
@@ -253,4 +273,108 @@ class InspectionDataQuality :
             )
 
         logger.success("Validation du taux de valeurs manquantes terminée.")
+
+    def validate_numeric_ranges(self, dataframe: DataFrame) -> None:
+        """
+        Vérifie que les mesures numériques
+        restent dans des plages physiques
+        plausibles.
+
+        Les lignes ne sont pas supprimées.
+        Une exception est levée lorsqu'une
+        colonne contient des valeurs hors plage.
+        """
+
+        if dataframe is None:
+            raise ValueError("Le DataFrame reçu est None.")
+
+        logger.info("Validation des plages numériques.")
+
+        invalid_columns = []
+
+        # -----------------------------
+        # Températures
+        # -----------------------------
+        for column in self.TEMPERATURE_COLUMNS:
+
+            if column not in dataframe.columns:
+                continue
+
+            invalid_count = (
+                dataframe
+                .filter( (F.col(column) < self.TEMPERATURE_MIN) | (F.col(column) > self.TEMPERATURE_MAX)
+                )
+                .count()
+            )
+
+            if invalid_count > 0:
+                invalid_columns.append(
+                    (
+                        column,
+                        invalid_count,
+                        f"[{self.TEMPERATURE_MIN}, {self.TEMPERATURE_MAX}]",
+                    )
+                )
+
+        # -----------------------------
+        # Vibrations
+        # -----------------------------
+        for column in self.VIBRATION_COLUMNS:
+
+            if column not in dataframe.columns:
+                continue
+
+            invalid_count = (
+                dataframe
+                .filter(
+                    (F.col(column) < self.VIBRATION_MIN)
+                    |
+                    (F.col(column) > self.VIBRATION_MAX)
+                )
+                .count()
+            )
+
+            if invalid_count > 0:
+                invalid_columns.append(
+                    (
+                        column,
+                        invalid_count,
+                        f"[{self.VIBRATION_MIN}, {self.VIBRATION_MAX}]",
+                    )
+                )
+
+        if invalid_columns:
+            details = "\n".join(
+                f"{column} : {count} valeur(s) hors plage {expected_range}"
+                for column, count, expected_range in invalid_columns
+            )
+
+            logger.error(
+                "Valeurs numériques incohérentes détectées.\n"
+                + details
+            )
+
+            raise InvalidNumericRangeError(
+                "Des valeurs numériques sont hors des plages autorisées.",
+                details,
+            )
+
+        logger.success("Validation des plages numériques terminée.")
+
+
+    """
+    pour v1  ça suffisant, et par la suite on va implémenter quelque chose comme : 
+    validate_unique_primary_key()
+
+    validate_future_dates()
+
+    validate_binary_values()
+
+    validate_string_length()
+
+    validate_duplicate_primary_key() 
+    ....
+    """
+
+
 

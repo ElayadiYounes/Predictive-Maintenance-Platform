@@ -85,4 +85,11 @@ class HighNullRatioError(MaintenancePlatformException):
     """
     pass
 
+class InvalidNumericRangeError(MaintenancePlatformException):
+    """
+    Une ou plusieurs colonnes numériques
+    contiennent des valeurs hors des
+    plages autorisées.
+    """
+    pass
 
