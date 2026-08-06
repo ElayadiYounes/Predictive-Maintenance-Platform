@@ -70,3 +70,9 @@ class MissingRequiredColumnError(MaintenancePlatformException):
     """Une ou plusieurs colonnes obligatoires sont absentes. """
     pass
 
+class InvalidSchemaError(MaintenancePlatformException):
+    """
+    Le schéma Spark ne correspond
+    pas au schéma attendu.
+    """
+    pass
