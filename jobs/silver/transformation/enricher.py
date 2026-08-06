@@ -241,6 +241,44 @@ class InspectionEnricher:
 
         return enriched_dataframe
 
+    def enrich(self, dataframe : DataFrame) -> DataFrame:
+        """
+        Orchestre l'ensemble des opérations
+        d'enrichissement des données d'inspection.
+
+        Étapes :
+        1. création des variables de température ;
+        2. création des variables de vibration ;
+        3. création des variables temporelles.
+
+        Parameters
+        ----------
+        dataframe : DataFrame
+            DataFrame Spark à enrichir.
+
+        Returns
+        -------
+        DataFrame
+            DataFrame enrichi.
+        """
+
+        if dataframe is None:
+            raise ValueError("Le DataFrame reçu par enrich() est None")
+
+        logger.info("Début de l'enrichissement des données")
+
+        enriched_dataframe = dataframe
+
+        enriched_dataframe = self.enrich_temperature_features(enriched_dataframe)
+        enriched_dataframe = self.enrich_vibration_features(enriched_dataframe)
+        enriched_dataframe = self.enrich_temporal_features(enriched_dataframe)
+
+        logger.success("Enrichissement Génerale Terminé avec succes.")
+
+        return enriched_dataframe
+
+
+
     
 
 
