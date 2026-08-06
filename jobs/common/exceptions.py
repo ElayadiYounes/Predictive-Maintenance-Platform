@@ -64,3 +64,9 @@ class DataLakeWriteError(MaintenancePlatformException):
     """levée lorsque Spark n'est pas capable de écrire couche silver"""
     pass
 
+
+
+class MissingRequiredColumnError(MaintenancePlatformException):
+    """Une ou plusieurs colonnes obligatoires sont absentes. """
+    pass
+
