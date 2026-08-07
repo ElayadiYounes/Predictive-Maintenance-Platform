@@ -61,51 +61,37 @@ def transform_inspection() -> None:
     try:
 
         logger.info("Lecture des données Bronze...")
-
+        # -------------------------------------------------
+        # Lecture Bronze
+        # -------------------------------------------------
         dataframe = read_bronze_parquet(spark,bronze_path)
 
         logger.info(f"Lecture terminée ({dataframe.count():,} lignes).")
 
-        # -------------------------------------------------
-        # Validation structure
-        # -------------------------------------------------
+        #standardisation les noms des colonnes métier
+        dataframe = standardizer.standardize_column_names(dataframe)
 
+        #Validation les colonnes indispensable
         quality.validate_required_columns(dataframe)
 
-        # -------------------------------------------------
-        # Nettoyage
-        # -------------------------------------------------
-
+        #Data Cleaning
         dataframe = cleaner.clean(dataframe)
+        dataframe = cleaner.clean_missing_values(dataframe)
 
-        # -------------------------------------------------
-        # Validation qualité
-        # -------------------------------------------------
-
+        #Validation taux de null
         quality.validate_null_ratio(dataframe)
 
-        # -------------------------------------------------
-        # Standardisation
-        # -------------------------------------------------
+        #standardisation text et types
+        dataframe = standardizer.standardize_text_values(dataframe)
+        dataframe= standardizer.standardize_data_types(dataframe)
 
-        dataframe = standardizer.standardize(dataframe)
-
-        # -------------------------------------------------
-        # Validation schéma
-        # -------------------------------------------------
-
+        #Validation schema
         quality.validate_schema(dataframe)
 
-        # -------------------------------------------------
-        # Enrichissement
-        # -------------------------------------------------
-
+        #enrichissement
         dataframe = enricher.enrich(dataframe)
 
-        # -------------------------------------------------
-        # Validation métier
-        # -------------------------------------------------
-
+        #Validation les intervalles des valeurs numerique
         quality.validate_numeric_ranges(dataframe)
 
         # -------------------------------------------------
