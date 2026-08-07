@@ -93,3 +93,5 @@ class InvalidNumericRangeError(MaintenancePlatformException):
     """
     pass
 
+class NoPartitionFoundError(MaintenancePlatformException):
+    """Aucune partition trouvée dans MinIO."""

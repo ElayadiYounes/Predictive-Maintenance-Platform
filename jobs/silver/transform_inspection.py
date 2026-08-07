@@ -1,6 +1,7 @@
 from jobs.common.logger import logger
 from jobs.common.spark_session import get_spark_session
 from jobs.common.config import settings
+from jobs.common.minio_client import MinioStorageClient
 
 from jobs.silver.readers.bronze_reader import read_bronze_parquet
 from jobs.silver.writers.silver_writer import write_silver_parquet
@@ -37,6 +38,13 @@ def transform_inspection() -> None:
     logger.info("=" * 70)
 
     spark = get_spark_session(settings.PROJECT_NAME)
+    minio_client = MinioStorageClient()
+    latest_partition = minio_client.get_latest_partition(bucket_name=settings.BRONZE_BUCKET,prefix="inspection")
+    bronze_path = (
+        f"s3a://"
+        f"{settings.BRONZE_BUCKET}/"
+        f"{latest_partition}"
+    )
 
 
     quality = InspectionDataQuality()
@@ -49,7 +57,7 @@ def transform_inspection() -> None:
 
         logger.info("Lecture des données Bronze...")
 
-        #!!!!!!!!!!!!!!!!!!!!!!! reader ici !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        dataframe = read_bronze_parquet(spark,bronze_path)
 
         logger.info(f"Lecture terminée ({dataframe.count():,} lignes).")
 
