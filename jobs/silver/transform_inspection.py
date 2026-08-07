@@ -45,6 +45,11 @@ def transform_inspection() -> None:
         f"{settings.BRONZE_BUCKET}/"
         f"{latest_partition}"
     )
+    silver_path = (
+        f"s3a://"
+        f"{settings.SILVER_BUCKET}/"
+        f"{latest_partition}"
+    )
 
 
     quality = InspectionDataQuality()
@@ -107,7 +112,7 @@ def transform_inspection() -> None:
         # Ecriture Silver
         # -------------------------------------------------
 
-        #!!!!!!!!!!!!!!!!!!!!!!!!! writer ici !!!!!!!!!!!!!!!!!!!!!!!
+        write_silver_parquet(dataframe, silver_path)
 
         logger.info("=" * 70)
         logger.success("Transformation Silver terminée.")
