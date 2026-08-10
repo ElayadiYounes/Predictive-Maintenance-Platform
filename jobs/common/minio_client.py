@@ -3,7 +3,7 @@ from botocore.client import Config
 from botocore.exceptions import ClientError
 import pandas as pd
 from io import BytesIO
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 
 from jobs.common.config import settings
@@ -73,7 +73,7 @@ class MinioStorageClient:
         prefix : str
             generalement le nom de table cible
         """
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         year = now.strftime("%Y")
         month = now.strftime("%m")
         day = now.strftime("%d")

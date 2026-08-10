@@ -97,6 +97,9 @@ def transform_inspection() -> None:
         # -------------------------------------------------
         # Ecriture Silver
         # -------------------------------------------------
+        logger.info("Vérification final ...")
+        dataframe.printSchema()
+        dataframe.show(5, truncate=False)
 
         write_silver_parquet(dataframe, silver_path)
 
@@ -110,8 +113,10 @@ def transform_inspection() -> None:
         )
         raise
 
-    if __name__ == "__main__":
-        transform_inspection()
+
+
+if __name__ == "__main__":
+    transform_inspection()
 
 
 

@@ -84,10 +84,10 @@ class InspectionDataQuality :
 
     #ces valeurs est provisiore je vais valider les vrais valeurs avac l'encadrent
     TEMPERATURE_MIN = 0
-    TEMPERATURE_MAX = 120
+    TEMPERATURE_MAX = 500
 
     VIBRATION_MIN = 0
-    VIBRATION_MAX = 50
+    VIBRATION_MAX = 2000
 
     def validate_required_columns(self,dataframe: DataFrame,) -> None:
         """

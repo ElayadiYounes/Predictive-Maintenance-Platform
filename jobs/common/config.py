@@ -89,6 +89,17 @@ class Settings(BaseSettings):
 
     POSTGRES_PASSWORD : SecretStr
 
+    HIVE_METASTORE_HOST : str
+    HIVE_METASTORE_PORT : int
+    HIVE_WAREHOUSE_DIR : str
+
+    @property
+    def HIVE_METASTORE_URI(self) -> str:
+        return (
+            f"thrift://{self.HIVE_METASTORE_HOST}"
+            f":{self.HIVE_METASTORE_PORT}"
+        )
+
 
 
 

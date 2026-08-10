@@ -81,7 +81,7 @@ class InspectionEnricher:
             )
             .withColumn(
                 "temperature_mean",
-                (F.col("t_av") + F.col("t_ar")) / F.lit(2.0),
+                F.round((F.col("t_av") + F.col("t_ar")) / F.lit(2.0)),
             )
             .withColumn(
                 "temperature_difference",
@@ -160,12 +160,12 @@ class InspectionEnricher:
             # Vibration moyenne côté avant
             .withColumn(
                 "vibration_av_mean",
-                ( F.col("av_ax") + F.col("av_h") + F.col("av_v") ) / F.lit(3.0),
+                F.round(( F.col("av_ax") + F.col("av_h") + F.col("av_v") ) / F.lit(3.0)),
             )
             # Vibration moyenne côté arrière
             .withColumn(
                 "vibration_ar_mean",
-                ( F.col("ar_ax") + F.col("ar_h") + F.col("ar_v") ) / F.lit(3.0),
+                F.round(( F.col("ar_ax") + F.col("ar_h") + F.col("ar_v") ) / F.lit(3.0)),
             )
         )
 
@@ -174,7 +174,7 @@ class InspectionEnricher:
             enriched_dataframe
             .withColumn(
                 "vibration_mean",
-                ( F.col("av_ax") + F.col("av_h") + F.col("av_v") + F.col("ar_ax") + F.col("ar_h") + F.col("ar_v") ) / F.lit(6.0),
+               F.round(( F.col("av_ax") + F.col("av_h") + F.col("av_v") + F.col("ar_ax") + F.col("ar_h") + F.col("ar_v") ) / F.lit(6.0)),
             )
             .withColumn(
                 "vibration_side_difference",

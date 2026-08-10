@@ -28,6 +28,7 @@ ENV SPARK_HOME=/opt/spark \
     PYTHONUNBUFFERED=1 \
     PYSPARK_PYTHON=python3 \
     PYSPARK_DRIVER_PYTHON=python3 \
+    PYTHONPATH=/app \
     PATH="${SPARK_HOME}/bin:${PATH}"
 
 
@@ -78,7 +79,7 @@ RUN chmod +x /entrypoint.sh
 
 # Working directory
 # ==================================================
-WORKDIR /opt/spark/work-dir
+WORKDIR /app
 
 
 # Switch back to spark user

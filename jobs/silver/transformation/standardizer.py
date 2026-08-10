@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 from jobs.common.logger import logger
 from pyspark.sql import DataFrame
@@ -84,7 +85,7 @@ class InspectionStandardizer :
         return standardized_dataframe
 
     @staticmethod
-    def _fix_encoding(value: str | None) -> str | None:
+    def _fix_encoding(value: Optional[str]) -> Optional[str]:
         """ Corrige certains textes UTF-8 interprétés à tort comme des caractères Latin-1.
             Exemple : DÃ©chargement -> Déchargement Si la correction est impossible ou inutile,
             la valeur originale est conservée.
