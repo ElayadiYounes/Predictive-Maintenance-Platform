@@ -4,7 +4,7 @@
 
 Présentation en quelques lignes de l'architecture et de ses objectifs.
 
-![Architecture générale](architecture_générale.png)
+![Architecture générale](architecture_générale_v2.png)
 
 ---
 
