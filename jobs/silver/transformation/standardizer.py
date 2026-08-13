@@ -168,7 +168,7 @@ class InspectionStandardizer :
         if "date" in standardized_dataframe.columns:
             standardized_dataframe = (
             standardized_dataframe
-            .withColumn("date", F.col("date").cast("timestamp"), )
+            .withColumn("date", F.col("date").cast("date"), )
             )
         #étape 3 : les indicateur binaires
         for column in self.BINARY_COLUMNS:
