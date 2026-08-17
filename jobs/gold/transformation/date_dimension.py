@@ -16,7 +16,7 @@ def build_dim_time(dataframe: DataFrame) -> DataFrame:
             "month",
             "day",
         )
-        .dropDuplicates()
+        .dropDuplicates(["date"])
         .withColumn(
             "id_time",
             F.date_format(

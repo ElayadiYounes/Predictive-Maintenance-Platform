@@ -12,7 +12,7 @@ def build_dim_equipement(dataframe: DataFrame) -> DataFrame:
             "zone",
             "instal",
         )
-        .dropDuplicates()
+        .dropDuplicates(["zone", "instal"])
         .withColumn(
             "id_equipement",
             F.xxhash64(

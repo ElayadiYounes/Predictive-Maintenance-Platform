@@ -111,7 +111,7 @@ def build_fact_inspection(dataframe: DataFrame, dim_time: DataFrame, dim_equipem
         F.col("vibration_av_mean"),
         F.col("vibration_ar_mean"),
         F.col("vibration_mean"),
-        F.col("vibration_difference"),
+        F.col("vibration_side_difference"),
 
         # Informations métier
         F.col("observation"),
