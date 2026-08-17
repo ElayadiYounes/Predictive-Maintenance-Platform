@@ -4,7 +4,7 @@ from pyspark.sql.utils import AnalysisException
 from jobs.common.logger import logger
 from jobs.common.exceptions import DataLakeReadError
 
-def read_bronze_parquet(spark : SparkSession, silver_path : str) -> DataFrame:
+def read_silver_parquet(spark : SparkSession, silver_path : str) -> DataFrame:
     """
     Lit un fichier Parquet depuis la couche silver
     et retourne un DataFrame Spark.
@@ -38,11 +38,11 @@ def read_bronze_parquet(spark : SparkSession, silver_path : str) -> DataFrame:
     except AnalysisException as e:
         logger.exception(f"Impossible de lire les données Silver : {silver_path}")
         raise DataLakeReadError(
-            "Lecture des données Bronze impossible.",
+            "Lecture des données Silver impossible.",
             str(e),
         ) from e
 
     except Exception:
         logger.exception("Erreur inattendue lors de la lecture de la couche Silver.")
-    raise
+        raise
 
