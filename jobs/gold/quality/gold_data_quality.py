@@ -96,3 +96,78 @@ class GoldDataQuality:
             f"FK {fact_key} → "
             f"{dimension_name}.{dimension_key} valide."
         )
+    @staticmethod
+    def validate_fact_foreign_keys(fact: DataFrame) -> None:
+        """
+        Vérifie que les clés étrangères obligatoires
+        de fact_inspection ne sont pas NULL.
+        """
+
+        required_keys = [
+            "id_time",
+            "id_equipement",
+            "id_user",
+        ]
+
+        for column in required_keys:
+
+            null_count = fact.filter(
+                F.col(column).isNull()
+            ).count()
+
+            if null_count > 0:
+                raise MaintenancePlatformException(
+                    f"fact_inspection : "
+                    f"{null_count} valeur(s) NULL "
+                    f"détectée(s) dans '{column}'."
+                )
+
+
+    @staticmethod
+    def validate_fact_uniqueness(fact: DataFrame) -> None:
+        """
+        Vérifie l'unicité de l'identifiant d'inspection.
+        """
+
+        logger.info(
+            "Validation de l'unicité de fact_inspection..."
+        )
+
+        duplicate_count = (
+            fact
+            .groupBy("id_inspection")
+            .count()
+            .filter(F.col("count") > 1)
+            .count()
+        )
+
+        if duplicate_count > 0:
+            raise MaintenancePlatformException(
+                f"fact_inspection : "
+                f"{duplicate_count} inspection(s) dupliquée(s)."
+            )
+
+        logger.success(
+            "Unicité de fact_inspection validée."
+        )
+
+    @staticmethod
+    def validate_required_columns(dataframe: DataFrame, required_columns: list[str], dataframe_name: str) -> None:
+        """
+        Vérifie la présence des colonnes obligatoires.
+        """
+
+        missing_columns = [
+            column
+            for column in required_columns
+            if column not in dataframe.columns
+        ]
+
+        if missing_columns:
+            raise MaintenancePlatformException(
+                f"{dataframe_name} : "
+                f"colonnes manquantes : "
+                f"{missing_columns}"
+            )
+
+
