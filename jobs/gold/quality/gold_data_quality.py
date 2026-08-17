@@ -170,4 +170,46 @@ class GoldDataQuality:
                 f"{missing_columns}"
             )
 
+    @staticmethod
+    def validate_row_count_not_increased(
+            source_dataframe: DataFrame,
+            target_dataframe: DataFrame,
+            source_name: str,
+            target_name: str,
+    ) -> None:
+        """
+        Vérifie que la transformation n'a pas augmenté
+        le nombre de lignes du DataFrame.
+
+        Une augmentation du nombre de lignes peut indiquer
+        une jointure 1-N inattendue ou une duplication de données.
+        """
+
+        logger.info(
+            f"Validation du nombre de lignes : "
+            f"{source_name} → {target_name}..."
+        )
+
+        source_count = source_dataframe.count()
+        target_count = target_dataframe.count()
+
+        logger.info(
+            f"{source_name}: {source_count:,} lignes"
+        )
+
+        logger.info(
+            f"{target_name}: {target_count:,} lignes"
+        )
+
+        if target_count > source_count:
+            raise MaintenancePlatformException(
+                f"Le nombre de lignes a augmenté lors de la "
+                f"transformation {source_name} → {target_name} : "
+                f"{source_count:,} → {target_count:,}."
+            )
+
+        logger.success(
+            f"Nombre de lignes valide : "
+            f"{source_count:,} → {target_count:,}."
+        )
 
