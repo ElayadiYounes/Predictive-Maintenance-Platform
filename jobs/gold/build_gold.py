@@ -1,5 +1,6 @@
 from pyspark.sql import DataFrame
 
+from jobs.common.minio_client import MinioStorageClient
 from jobs.common.config import settings
 from jobs.common.spark_session import get_spark_session
 from jobs.common.logger import logger
@@ -36,6 +37,7 @@ def build_gold() -> None:
     logger.info("=" * 70)
 
     spark = get_spark_session(settings.PROJECT_NAME)
+    minio_client = MinioStorageClient()
     quality = GoldDataQuality()
 
     try:
@@ -43,10 +45,19 @@ def build_gold() -> None:
         # 1. Détermination du chemin Silver
         # =====================================================
 
+        latest_partition = minio_client.get_latest_partition(
+            bucket_name=settings.SILVER_BUCKET,
+            prefix="inspection",
+        )
+
+        logger.info(
+            f"Dernière partition Silver détectée : {latest_partition}"
+        )
+
         minio_path = (
             f"s3a://"
             f"{settings.SILVER_BUCKET}/"
-            f"inspection"
+            f"{latest_partition}"
         )
 
         logger.info(
@@ -110,7 +121,7 @@ def build_gold() -> None:
 
         #Validation des colonnes obligatoire
         quality.validate_required_columns(dim_time,
-                                          ["id_time","date","year","month","day"],
+                                          ["id_time","date","inspection_year","inspection_month","inspection_day","month_name"],
                                           "dim_time"
         )
         quality.validate_required_columns(dim_equipement,
@@ -175,6 +186,12 @@ def build_gold() -> None:
         logger.info("=" * 70)
         logger.info("GOLD WRITING")
         logger.info("=" * 70)
+        # Création du schéma Hive
+        spark.sql(
+            """
+            CREATE DATABASE IF NOT EXISTS gold
+             """
+        )
         write_gold_table(dim_time,"gold.dim_time",f"{gold_base_path}/dim_time")
         write_gold_table(dim_equipement,"gold.dim_equipement",f"{gold_base_path}/dim_equipement")
         write_gold_table(dim_user,"gold.dim_user",f"{gold_base_path}/dim_user")

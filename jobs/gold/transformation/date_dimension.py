@@ -12,9 +12,9 @@ def build_dim_time(dataframe: DataFrame) -> DataFrame:
         dataframe
         .select(
             "date",
-            "year",
-            "month",
-            "day",
+            "inspection_year",
+            "inspection_month",
+            "inspection_day",
         )
         .dropDuplicates(["date"])
         .withColumn(
@@ -31,9 +31,9 @@ def build_dim_time(dataframe: DataFrame) -> DataFrame:
         .select(
             "id_time",
             "date",
-            "year",
-            "month",
-            "day",
+            "inspection_year",
+            "inspection_month",
+            "inspection_day",
             "month_name",
         )
     )

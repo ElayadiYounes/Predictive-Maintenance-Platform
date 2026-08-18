@@ -2,7 +2,7 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from jobs.common.logger import logger
 from jobs.common.exceptions import MissingRequiredColumnError, InvalidSchemaError, HighNullRatioError, InvalidNumericRangeError
-from pyspark.sql.types import (IntegerType, DoubleType, StringType, TimestampType)
+from pyspark.sql.types import (IntegerType, DoubleType, StringType, TimestampType,DateType)
 
 
 
@@ -49,7 +49,7 @@ class InspectionDataQuality :
 
     EXPECTED_SCHEMA = {
         "id": IntegerType,
-        "date": TimestampType,
+        "date": DateType,
 
         "zone": StringType,
         "instal": StringType,

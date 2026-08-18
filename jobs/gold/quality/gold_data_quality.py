@@ -3,6 +3,7 @@ from pyspark.sql import functions as F
 
 from jobs.common.logger import logger
 from jobs.common.exceptions import MaintenancePlatformException
+from typing import List
 
 
 class GoldDataQuality:
@@ -173,7 +174,7 @@ class GoldDataQuality:
 
 
     @staticmethod
-    def validate_required_columns(dataframe: DataFrame, required_columns: list[str], dataframe_name: str) -> None:
+    def validate_required_columns(dataframe: DataFrame, required_columns: List[str], dataframe_name: str) -> None:
         """
         Vérifie la présence des colonnes obligatoires.
         """
