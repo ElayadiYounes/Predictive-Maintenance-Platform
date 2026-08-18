@@ -122,16 +122,36 @@ class GoldDataQuality:
                     f"détectée(s) dans '{column}'."
                 )
 
-
     @staticmethod
     def validate_fact_uniqueness(fact: DataFrame) -> None:
         """
-        Vérifie l'unicité de l'identifiant d'inspection.
+        Vérifie que l'identifiant d'inspection est :
+        - présent
+        - non NULL
+        - unique
         """
 
         logger.info(
             "Validation de l'unicité de fact_inspection..."
         )
+
+        if "id_inspection" not in fact.columns:
+            raise MaintenancePlatformException(
+                "fact_inspection : colonne 'id_inspection' absente."
+            )
+
+        null_count = (
+            fact
+            .filter(F.col("id_inspection").isNull())
+            .count()
+        )
+
+        if null_count > 0:
+            raise MaintenancePlatformException(
+                f"fact_inspection : "
+                f"{null_count} valeur(s) NULL détectée(s) "
+                f"dans 'id_inspection'."
+            )
 
         duplicate_count = (
             fact
@@ -150,6 +170,7 @@ class GoldDataQuality:
         logger.success(
             "Unicité de fact_inspection validée."
         )
+
 
     @staticmethod
     def validate_required_columns(dataframe: DataFrame, required_columns: list[str], dataframe_name: str) -> None:
@@ -201,7 +222,7 @@ class GoldDataQuality:
             f"{target_name}: {target_count:,} lignes"
         )
 
-        if target_count > source_count:
+        if target_count != source_count:
             raise MaintenancePlatformException(
                 f"Le nombre de lignes a augmenté lors de la "
                 f"transformation {source_name} → {target_name} : "

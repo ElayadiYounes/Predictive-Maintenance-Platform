@@ -132,6 +132,8 @@ def build_gold() -> None:
         quality.validate_dimension_keys(dim_user,"id_user","dim_user")
 
         #validation FK
+        quality.validate_fact_foreign_keys(fact_inspection)
+
         quality.validate_foreign_key(fact_inspection,
                                      dim_time,
                                      "id_time",
@@ -150,7 +152,7 @@ def build_gold() -> None:
                                      "id_user",
                                      "dim_user"
         )
-        quality.validate_fact_foreign_keys(fact_inspection)
+
 
         #validation les doublons
         quality.validate_fact_uniqueness(fact_inspection)
