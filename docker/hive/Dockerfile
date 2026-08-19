@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:8-jre-focal
 
 # ==================================================
 # System dependencies
@@ -23,8 +23,9 @@ ENV HIVE_VERSION=3.1.3 \
     HIVE_HOME=/opt/hive \
     HADOOP_HOME=/opt/hadoop \
     JAVA_HOME=/opt/java/openjdk \
-    PATH="${HIVE_HOME}/bin:${HADOOP_HOME}/bin:${PATH}" \
     HADOOP_CLASSPATH="${HADOOP_HOME}/share/hadoop/tools/lib/*"
+# Global PATH
+ENV PATH="${HIVE_HOME}/bin:${HADOOP_HOME}/bin:${JAVA_HOME}/bin:${PATH}"
 
 # ==================================================
 # Third-party dependencies
@@ -71,14 +72,46 @@ COPY docker/hive/entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
 
+
+# ==================================================
+# SÉCURITÉ : WRAPPER JAVA (Bloque le JDWP forcé par l'hôte)
+# ==================================================
+RUN mv /opt/java/openjdk/bin/java /opt/java/openjdk/bin/java.real && \
+    echo '#!/bin/bash' > /opt/java/openjdk/bin/java && \
+    echo 'unset JAVA_TOOL_OPTIONS _JAVA_OPTIONS' >> /opt/java/openjdk/bin/java && \
+    echo 'NEW_ARGS=()' >> /opt/java/openjdk/bin/java && \
+    echo 'for arg in "$@"; do' >> /opt/java/openjdk/bin/java && \
+    echo '    if [[ "$arg" != *"jdwp"* && "$arg" != *"Xrunjdwp"* ]]; then' >> /opt/java/openjdk/bin/java && \
+    echo '        NEW_ARGS+=("$arg")' >> /opt/java/openjdk/bin/java && \
+    echo '    fi' >> /opt/java/openjdk/bin/java && \
+    echo 'done' >> /opt/java/openjdk/bin/java && \
+    echo 'exec /opt/java/openjdk/bin/java.real "${NEW_ARGS[@]}"' >> /opt/java/openjdk/bin/java && \
+    chmod +x /opt/java/openjdk/bin/java
+
+
 # ==================================================
 # Create non-root user
 # ==================================================
-RUN useradd -m -u 1005 hive && \
-    chown -R hive:hive ${HIVE_HOME}
+RUN useradd -m -u 1005 -s /bin/bash hive && \
+    echo 'unset JAVA_TOOL_OPTIONS _JAVA_OPTIONS' > /home/hive/.bashrc && \
+    echo 'export JAVA_TOOL_OPTIONS="" _JAVA_OPTIONS="" HIVE_OPTS=""' >> /home/hive/.bashrc && \
+    echo "export HIVE_HOME=/opt/hive" >> /home/hive/.bashrc && \
+    echo "export HADOOP_HOME=/opt/hadoop" >> /home/hive/.bashrc && \
+    echo "export JAVA_HOME=/opt/java/openjdk" >> /home/hive/.bashrc && \
+    echo 'export HADOOP_CLASSPATH=$HADOOP_HOME/share/hadoop/tools/lib/*' >> /home/hive/.bashrc && \
+    echo 'export PATH=$HIVE_HOME/bin:$HADOOP_HOME/bin:$JAVA_HOME/bin:$PATH' >> /home/hive/.bashrc && \
+    chown -R hive:hive /home/hive ${HIVE_HOME}
 
+
+# ==================================================
+# Working directory
+# ==================================================
 WORKDIR ${HIVE_HOME}
 
+
+# ==================================================
+# Runtime user
+# ==================================================
 USER hive
 
 # ==================================================

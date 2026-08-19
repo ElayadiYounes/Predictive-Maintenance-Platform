@@ -512,6 +512,8 @@ services:
     ports:
       - "${HIVE_SERVER_PORT}:10000"
 
+    env_file:
+      - .env.dev
     environment:
       APP_ENV: ${APP_ENV}
 
@@ -532,6 +534,9 @@ services:
       MINIO_API_PORT: 9000
 
       HIVE_METASTORE_DB_TYPE: postgres
+
+      # === CONFIGURATION CORRIGÉE : UN SEUL CHARGEMENT DE L'AGENT ===
+      HADOOP_OPTS: "-Djava.net.preferIPv4Stack=true -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8001"
 
 
   metabase:

@@ -2,9 +2,18 @@
 
 set -e
 
+# === ARCHITECTURE CONFIGURATION JAVA 8 ===
+export HIVE_OPTS=""
+export HIVE_DEBUG="false"
+
+export HIVE_HOME="${HIVE_HOME:-/opt/hive}"
 export HADOOP_HOME="${HADOOP_HOME:-/opt/hadoop}"
-export PATH="${HIVE_HOME}/bin:${HADOOP_HOME}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export JAVA_HOME="${JAVA_HOME:-/opt/java/openjdk}"
+
 export HADOOP_CLASSPATH="${HADOOP_HOME}/share/hadoop/tools/lib/*"
+
+export PATH="${HIVE_HOME}/bin:${HADOOP_HOME}/bin:${JAVA_HOME}/bin:${PATH}"
+
 echo "==========================================="
 echo "OCP Predictive Maintenance Platform"
 echo "Hive"
@@ -43,7 +52,22 @@ echo "PostgreSQL is ready."
 echo "======================================"
 echo "Checking Hive installation..."
 echo "HIVE_HOME=${HIVE_HOME}"
+echo "HADOOP_HOME=${HADOOP_HOME}"
+echo "JAVA_HOME=${JAVA_HOME}"
 echo "PATH=${PATH}"
+
+echo "Checking Beeline..."
+if command -v beeline >/dev/null 2>&1; then
+    echo "Beeline found: $(command -v beeline)"
+
+    beeline --version || true
+
+else
+    echo "ERROR: Beeline not found in PATH."
+    ls -la "${HIVE_HOME}/bin/beeline" || true
+    exit 1
+fi
+
 
 
 case "${HIVE_SERVICE}" in
