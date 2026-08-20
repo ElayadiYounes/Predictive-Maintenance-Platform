@@ -100,7 +100,11 @@ RUN useradd -m -u 1005 -s /bin/bash hive && \
     echo "export JAVA_HOME=/opt/java/openjdk" >> /home/hive/.bashrc && \
     echo 'export HADOOP_CLASSPATH=$HADOOP_HOME/share/hadoop/tools/lib/*' >> /home/hive/.bashrc && \
     echo 'export PATH=$HIVE_HOME/bin:$HADOOP_HOME/bin:$JAVA_HOME/bin:$PATH' >> /home/hive/.bashrc && \
-    chown -R hive:hive /home/hive ${HIVE_HOME}
+    mkdir -p /tmp/hive && \
+    chown -R hive:hive /home/hive ${HIVE_HOME} /tmp/hive && \
+    chmod 1777 /tmp /tmp/hive
+
+
 
 
 # ==================================================
