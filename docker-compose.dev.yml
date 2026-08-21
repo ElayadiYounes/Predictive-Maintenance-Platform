@@ -27,9 +27,6 @@ services:
       minio:
         condition: service_healthy
 
-      hive-server:
-        condition: service_started
-
     networks:
       - ocp-network
 
@@ -499,8 +496,8 @@ services:
     restart: unless-stopped
 
     depends_on:
-      hive-server:
-        condition: service_started
+      spark-master:
+        condition: service_healthy
 
     networks:
       - ocp-network
@@ -512,12 +509,15 @@ services:
       - .env.dev
 
     environment:
-      MB_DB_TYPE: h2
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase_db
+      MB_DB_PORT: 5432
+      MB_DB_USER: ${POSTGRES_USER}
+      MB_DB_PASS: ${POSTGRES_PASSWORD}
+      MB_DB_HOST: postgres
 
       MB_SITE_NAME: ${PROJECT_NAME}
-
       MB_ANON_TRACKING_ENABLED: "false"
-
       JAVA_TIMEZONE: UTC
 
     volumes:
@@ -535,8 +535,6 @@ services:
       options:
         max-size: "20m"
         max-file: "5"
-
-
 
 
   spark-master:
