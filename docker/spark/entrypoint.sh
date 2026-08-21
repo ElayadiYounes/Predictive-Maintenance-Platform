@@ -49,11 +49,20 @@ case "${SPARK_MODE}" in
         echo "SPARK_MASTER_HOST=${SPARK_MASTER_HOST}"
         echo "SPARK_MASTER_PORT=${SPARK_MASTER_PORT}"
 
-        exec spark-class \
-              org.apache.spark.deploy.master.Master \
+        /opt/spark/sbin/start-master.sh \
               --host "${SPARK_MASTER_HOST}" \
               --port "${SPARK_MASTER_PORT}" \
               --webui-port "${SPARK_MASTER_WEBUI_PORT}"
+
+        echo "Starting Spark Thrift Server for Metabase on port 10016..."
+        /opt/spark/sbin/start-thriftserver.sh \
+              --master "spark://${SPARK_MASTER_HOST}:${SPARK_MASTER_PORT}" \
+              --hiveconf hive.server2.thrift.port=10016
+
+        # 3. CRUCIAL : On maintient le conteneur Docker actif en surveillant les logs de Spark
+        echo "Monitoring Spark logs to keep container alive..."
+        tail -f /opt/spark/logs/*
+
         ;;
 
     worker)

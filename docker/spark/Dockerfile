@@ -81,6 +81,7 @@ RUN chmod +x /entrypoint.sh
 # ==================================================
 WORKDIR /app
 
+RUN mkdir -p /opt/spark/logs && chown -R spark:spark /opt/spark/logs
 
 # Switch back to spark user
 # ==================================================

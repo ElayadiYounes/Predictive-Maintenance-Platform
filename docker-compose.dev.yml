@@ -491,52 +491,6 @@ services:
         max-size: "20m"
         max-file: "5"
 
-  hive-server:
-
-    build:
-      context: .
-      dockerfile: docker/hive/Dockerfile
-
-    image: ${PROJECT_NAME}/hive:${APP_ENV}
-
-    restart: unless-stopped
-
-    depends_on:
-
-      hive-metastore:
-        condition: service_healthy
-
-    networks:
-      - ocp-network
-
-    ports:
-      - "${HIVE_SERVER_PORT}:10000"
-
-    env_file:
-      - .env.dev
-    environment:
-      APP_ENV: ${APP_ENV}
-
-      HIVE_SERVICE: server2
-
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_HIVE_DATABASE: ${POSTGRES_HIVE_DATABASE}
-
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-
-      HIVE_WAREHOUSE_DIR: ${HIVE_WAREHOUSE_DIR}
-
-      MINIO_HOST: minio
-      MINIO_API_PORT: 9000
-
-      HIVE_METASTORE_DB_TYPE: postgres
-
-      # === CONFIGURATION CORRIGÉE : UN SEUL CHARGEMENT DE L'AGENT ===
-      HADOOP_OPTS: "-Djava.net.preferIPv4Stack=true -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8001"
 
 
   metabase:
@@ -553,6 +507,9 @@ services:
 
     ports:
       - "${METABASE_PORT}:3000"
+
+    env_file:
+      - .env.dev
 
     environment:
       MB_DB_TYPE: h2
@@ -604,6 +561,7 @@ services:
     ports:
       - "${SPARK_MASTER_PORT}:7077"
       - "${SPARK_MASTER_WEBUI_PORT}:8080"
+      - "10016:10016"
 
     env_file:
       - .env.dev

@@ -93,4 +93,5 @@
         <value>${MINIO_ROOT_PASSWORD}</value>
     </property>
 
+
 </configuration>
