@@ -57,7 +57,10 @@ case "${SPARK_MODE}" in
         echo "Starting Spark Thrift Server for Metabase on port 10016..."
         /opt/spark/sbin/start-thriftserver.sh \
               --master "spark://${SPARK_MASTER_HOST}:${SPARK_MASTER_PORT}" \
-              --hiveconf hive.server2.thrift.port=10016
+              --hiveconf hive.server2.thrift.port=10016 \
+              --conf spark.cores.max=4 \
+              --conf spark.executor.cores=2 \
+              --conf spark.executor.memory=1g
 
         # 3. CRUCIAL : On maintient le conteneur Docker actif en surveillant les logs de Spark
         echo "Monitoring Spark logs to keep container alive..."
