@@ -34,21 +34,21 @@ def transform_inspection() -> None:
     Silver
     """
     logger.info("=" * 70)
-    logger.info("SILVER TRANSFORMATION START")
+    logger.info("INSPECTION SILVER TRANSFORMATION START")
     logger.info("=" * 70)
 
     spark = get_spark_session(settings.PROJECT_NAME)
     minio_client = MinioStorageClient()
-    latest_partition = minio_client.get_latest_partition(bucket_name=settings.BRONZE_BUCKET,prefix="inspection")
-    bronze_path = (
+    latest_partition_inspection = minio_client.get_latest_partition(bucket_name=settings.BRONZE_BUCKET,prefix="inspection")
+    bronze_path_inspection = (
         f"s3a://"
         f"{settings.BRONZE_BUCKET}/"
-        f"{latest_partition}"
+        f"{latest_partition_inspection}"
     )
-    silver_path = (
+    silver_path_inspection = (
         f"s3a://"
         f"{settings.SILVER_BUCKET}/"
-        f"{latest_partition}"
+        f"{latest_partition_inspection}"
     )
 
 
@@ -64,7 +64,7 @@ def transform_inspection() -> None:
         # -------------------------------------------------
         # Lecture Bronze
         # -------------------------------------------------
-        dataframe = read_bronze_parquet(spark,bronze_path)
+        dataframe = read_bronze_parquet(spark,bronze_path_inspection)
 
         logger.info(f"Lecture terminée ({dataframe.count():,} lignes).")
 
@@ -101,10 +101,10 @@ def transform_inspection() -> None:
         dataframe.printSchema()
         dataframe.show(5, truncate=False)
 
-        write_silver_parquet(dataframe, silver_path)
+        write_silver_parquet(dataframe, silver_path_inspection)
 
         logger.info("=" * 70)
-        logger.success("Transformation Silver terminée.")
+        logger.success("INSPECTION TRANSFORMATION SILVER TERMINEE.")
         logger.info("=" * 70)
 
     except Exception:
@@ -112,6 +112,69 @@ def transform_inspection() -> None:
             "Le pipeline Silver a échoué."
         )
         raise
+
+    logger.info("=" * 70)
+    logger.info("LIMITE SILVER TRANSFORMATION START")
+    logger.info("=" * 70)
+
+    latest_partition_limite = minio_client.get_latest_partition(bucket_name=settings.BRONZE_BUCKET,prefix="limite")
+    bronze_path_limite = (
+        f"s3a://"
+        f"{settings.BRONZE_BUCKET}/"
+        f"{latest_partition_limite}"
+    )
+    silver_path_limite = (
+        f"s3a://"
+        f"{settings.SILVER_BUCKET}/"
+        f"{latest_partition_limite}"
+    )
+
+    try:
+        logger.info("Lecture des données Bronze...")
+        # -------------------------------------------------
+        # Lecture Bronze
+        # -------------------------------------------------
+        dataframe = read_bronze_parquet(spark, bronze_path_limite)
+
+        logger.info(f"Lecture terminée ({dataframe.count():,} lignes).")
+
+        # standardisation les noms des colonnes métier
+        dataframe = standardizer.limite_standardize_column_names(dataframe)
+
+        # Validation les colonnes indispensable
+        quality.validate_required_columns(dataframe)
+
+        # Data Cleaning
+        dataframe = cleaner.limite_clean(dataframe)
+
+        # Validation taux de null
+        quality.limite_validate_null_ratio(dataframe)
+
+        #standardisation de type
+        dataframe = standardizer.limite_standardize_data_types(dataframe)
+
+        #validation de schema
+        quality.limite_validate_schema(dataframe)
+
+        # -------------------------------------------------
+        # Ecriture Silver
+        # -------------------------------------------------
+        logger.info("Vérification final ...")
+        dataframe.printSchema()
+        dataframe.show(5, truncate=False)
+
+        write_silver_parquet(dataframe, silver_path_limite)
+
+        logger.info("=" * 70)
+        logger.success("LIMITE TRANSFORMATION SILVER TERMINEE.")
+        logger.info("=" * 70)
+
+    except Exception:
+        logger.exception(
+            "Le pipeline Silver a échoué."
+        )
+    raise
+
 
 
 
