@@ -4,9 +4,16 @@ from pyspark.sql.window import Window
 
 def build_fact_inspection(dataframe: DataFrame, dim_time: DataFrame, dim_equipement: DataFrame, dim_user: DataFrame) -> DataFrame:
     """
-    Construit la table fact_inspection à partir des données Silver
-    et des dimensions Gold. Inclut le Feature Engineering pour le ML (Ratios & RUL).
-    """
+Construit la table fact_inspection à partir des données Silver
+et des dimensions Gold.
+
+La table intègre :
+- les mesures d'inspection ;
+- les indicateurs calculés dans Silver ;
+- les seuils de danger associés aux équipements ;
+- les ratios par rapport aux seuils ;
+- les indicateurs de dépassement des seuils.
+"""
 
     # ---------------------------------------------------------
     # Préparation des dimensions (Enrichie avec les seuils)
@@ -77,25 +84,30 @@ def build_fact_inspection(dataframe: DataFrame, dim_time: DataFrame, dim_equipem
         F.greatest(F.col("av_v"), F.col("ar_v")) / F.col("seuil_danger_vib_vert")
     )
 
-    # ---------------------------------------------------------
-    # FEATURE ENGINEERING 2 : Calcul de la cible target_rul (XGBoost)
-    # ---------------------------------------------------------
-    # Étape A : On définit un état de panne (ex: si une mesure dépasse son seuil de danger)
-    # Si vous avez un vrai drapeau 'panne' dans vos données d'origine, remplacez cette condition par votre colonne.
-    is_broken_cond = (
-            (F.col("ratio_temp") >= 1.0) |
-            (F.col("ratio_vib_axiale") >= 1.0) |
-            (F.col("ratio_vib_horiz") >= 1.0) |
-            (F.col("ratio_vib_vert") >= 1.0)
-    )
-    fact = fact.withColumn("date_panne", F.when(is_broken_cond, F.col("date")).otherwise(None))
-
-    # Étape B : Fenêtre glissante pour trouver la date de la PROCHAINE panne pour CET équipement
-    # On regarde du point actuel jusqu'à la fin des temps (unboundedFollowing)
-    window_future = (
-        Window.partitionBy("id_equipement")
-        .orderBy("date")
-        .rowsBetween(Window.currentRow, Window.unboundedFollowing)
+    fact = fact.withColumn(
+        "alert_temperature",
+        F.when(
+            F.col("ratio_temp") >= 1,
+            1
+        ).otherwise(0)
+    ).withColumn(
+        "alert_vib_axiale",
+        F.when(
+            F.col("ratio_vib_axiale") >= 1,
+            1
+        ).otherwise(0)
+    ).withColumn(
+        "alert_vib_horiz",
+        F.when(
+            F.col("ratio_vib_horiz") >= 1,
+            1
+        ).otherwise(0)
+    ).withColumn(
+        "alert_vib_vert",
+        F.when(
+            F.col("ratio_vib_vert") >= 1,
+            1
+        ).otherwise(0)
     )
 
     # ---------------------------------------------------------
@@ -124,7 +136,10 @@ def build_fact_inspection(dataframe: DataFrame, dim_time: DataFrame, dim_equipem
         "ratio_vib_axiale",
         "ratio_vib_horiz",
         "ratio_vib_vert",
-        "target_rul",
+        "alert_temperature",
+        "alert_vib_axiale",
+        "alert_vib_horiz",
+        "alert_vib_vert",
 
         # Informations métier
         "observation", "action"
