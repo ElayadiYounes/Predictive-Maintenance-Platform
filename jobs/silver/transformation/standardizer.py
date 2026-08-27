@@ -49,6 +49,23 @@ class InspectionStandardizer :
         "ar_v",
     ]
 
+    LIMITE_COLUMNS = {
+        "INSTALL" : "instal",
+        "TAV" : "t_av_limite",
+        "VAX" : "v_ax_limite",
+        "VH" : "v_h_limite",
+        "VV" : "v_v_limite"
+    }
+
+    LIMITE_NUMIRIC_COLUMNS = [
+        "t_av_limite",
+        "v_ax_limite",
+        "v_h_limite",
+        "v_v_limite"
+    ]
+
+
+
     @staticmethod
     def standardize_column_names(dataframe : DataFrame) -> DataFrame :
         """ Standardise les noms des colonnes.
@@ -207,6 +224,51 @@ class InspectionStandardizer :
         logger.success("Standardisation des types de données Terminée")
 
         return standardized_dataframe
+
+    def limite_standardize_column_names(self,dataframe : DataFrame) -> DataFrame:
+
+        logger.info("Début de la Standardisation des noms de colonnes ")
+
+        standardized_dataframe = dataframe
+
+        for old_name , new_name in self.LIMITE_COLUMNS :
+            if old_name in standardized_dataframe.columns:
+                logger.debug(f"Colonne Renommée : {old_name} => {new_name}")
+                standardized_dataframe = (
+                        standardized_dataframe
+                        .withColumnRenamed(old_name, new_name, )
+                )
+        logger.success("Standardisation des noms de colonnes Terminée.")
+
+        return standardized_dataframe
+
+    def limite_standardize_data_types(self,dataframe : DataFrame) -> DataFrame:
+
+        logger.info("Début de la standardisation des types de données .")
+
+        standardized_dataframe = dataframe
+
+        # La référence de l'installation doit être uniforme.de type string
+        if "instal" in standardized_dataframe.columns:
+            standardized_dataframe = (
+                standardized_dataframe
+                .withColumn("instal", F.upper(F.col("instal").cast("string")), )
+            )
+
+
+        for column in self.LIMITE_NUMIRIC_COLUMNS:
+            if column in standardized_dataframe.columns:
+                standardized_dataframe = (
+                        standardized_dataframe
+                        .withColumn(column, F.col(column).cast("double"), )
+                    )
+
+        logger.success("Standardisation des types de données Terminée")
+
+        return standardized_dataframe
+
+
+    
 
 
 

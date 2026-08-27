@@ -5,14 +5,14 @@ from jobs.common.logger import logger
 
 class InspectionCleaner:
 
-    CRITICAL_COLUMNS = [
+    INSPECTION_CRITICAL_COLUMNS = [
         "id",
         "date",
         "zone",
         "instal",
     ]
 
-    TEXT_COLUMNS = [
+    INSPECTION_TEXT_COLUMNS = [
         "zone",
         "instal",
         "observation",
@@ -20,7 +20,7 @@ class InspectionCleaner:
         "utilisateur",
     ]
 
-    BINARY_COLUMNS = [
+    INSPECTION_BINARY_COLUMNS = [
         "p_produit",
         "huile_graisse",
         "ailette",
@@ -30,11 +30,19 @@ class InspectionCleaner:
         "graisseur",
     ]
 
-    TEXT_DEFAULT_VALUES = {
+    INSPECTION_TEXT_DEFAULT_VALUES = {
         "observation": "non renseignee",
         "action": "aucune action renseignee",
         "utilisateur": "inconnu",
     }
+
+    LIMITE_CRITICAL_COLUMNS = [
+        "instal",
+        "t_av_limite",
+        "v_ax_limite",
+        "v_h_limite",
+        "v_v_limite"
+    ]
 
     def clean(self, dataframe: DataFrame) -> DataFrame:
         """
@@ -100,7 +108,7 @@ class InspectionCleaner:
 
         available_text_columns = [
             column
-            for column in self.TEXT_COLUMNS
+            for column in self.INSPECTION_TEXT_COLUMNS
             if column in cleaned_dataframe.columns
         ]
 
@@ -156,7 +164,7 @@ class InspectionCleaner:
 
         # Colonnes critiques réellement présentes
         available_critical_columns = [
-            column for column in self.CRITICAL_COLUMNS
+            column for column in self.INSPECTION_CRITICAL_COLUMNS
             if column in cleaned_dataframe.columns
         ]
 
@@ -174,7 +182,7 @@ class InspectionCleaner:
 
         # Les indicateurs binaires manquants sont considérés comme absents.
         available_binary_columns = [
-            column for column in self.BINARY_COLUMNS
+            column for column in self.INSPECTION_BINARY_COLUMNS
             if column in cleaned_dataframe.columns
         ]
 
@@ -185,7 +193,7 @@ class InspectionCleaner:
 
         # Remplacement des valeurs manquantes dans les champs textuels.
         available_text_defaults = {
-            column: default_value for column, default_value in self.TEXT_DEFAULT_VALUES.items()
+            column: default_value for column, default_value in self.INSPECTION_TEXT_DEFAULT_VALUES.items()
             if column in cleaned_dataframe.columns
         }
 
@@ -198,8 +206,60 @@ class InspectionCleaner:
 
         return cleaned_dataframe
 
+    @staticmethod
+    def limite_clean(dataframe: DataFrame) -> DataFrame:
+
+        if dataframe is None:
+            raise ValueError(
+                "Le DataFrame reçu par InspectionCleaner est None."
+            )
+        initial_count = dataframe.count()
+
+        logger.info(f"Début du nettoyage : {initial_count:,} lignes.")
+
+        cleaned_dataframe = dataframe
+
+        # 1. Suppression des doublons exacts
+
+        cleaned_dataframe = cleaned_dataframe.dropDuplicates()
+
+        after_duplicates_count = cleaned_dataframe.count()
+
+        duplicates_removed = (initial_count - after_duplicates_count)
+
+        logger.info(f"Doublons exacts supprimés : {duplicates_removed:,}.")
+
+        # 2. Suppression des lignes sans identifiant
+
+        cleaned_dataframe = cleaned_dataframe.filter(F.col("instal").isNotNull())
+
+        after_id_count = cleaned_dataframe.count()
+
+        missing_id_removed = (
+                after_duplicates_count - after_id_count
+        )
+
+        logger.info(
+            f"Lignes sans identifiant supprimées : "
+            f"{missing_id_removed:,}."
+        )
+        final_count = cleaned_dataframe.count()
+
+        total_removed = initial_count - final_count
+
+        logger.success(
+            "Nettoyage terminé : "
+            f"{final_count:,} lignes conservées, "
+            f"{total_removed:,} lignes supprimées."
+        )
+
+        return cleaned_dataframe
+
+    def limite_clean_missing_values(self, dataframe: DataFrame) -> DataFrame:
+        """"""
+        pass
+
+
     #remarque on va par la suite optimiser la performence de ce code avec moins des actions spark (comme count, ...)
-
-
 
 
