@@ -173,7 +173,7 @@ def transform_inspection() -> None:
         logger.exception(
             "Le pipeline Silver a échoué."
         )
-    raise
+        raise
 
 
 

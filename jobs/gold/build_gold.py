@@ -45,42 +45,71 @@ def build_gold() -> None:
         # 1. Détermination du chemin Silver
         # =====================================================
 
-        latest_partition = minio_client.get_latest_partition(
+        latest_partition_inspection = minio_client.get_latest_partition(
             bucket_name=settings.SILVER_BUCKET,
             prefix="inspection",
         )
-
-        logger.info(
-            f"Dernière partition Silver détectée : {latest_partition}"
+        latest_partition_limite = minio_client.get_latest_partition(
+            bucket_name=settings.SILVER_BUCKET,
+            prefix="limite"
         )
 
-        minio_path = (
+        logger.info(
+            f"Dernière partition Silver inspection détectée : {latest_partition_inspection}"
+        )
+        logger.info(
+            f"Dernière partition Silver limite détectée : {latest_partition_limite}"
+        )
+
+        minio_path_inspection = (
             f"s3a://"
             f"{settings.SILVER_BUCKET}/"
-            f"{latest_partition}"
+            f"{latest_partition_inspection}"
         )
 
-        logger.info(
-            f"Lecture des données Silver depuis : {minio_path}"
+        minio_path_limite = (
+            f"s3a://"
+            f"{settings.SILVER_BUCKET}/"
+            f"{latest_partition_limite}"
         )
 
         # =====================================================
         # 2. Lecture Silver
         # =====================================================
 
-        dataframe = read_silver_parquet(
-            spark=spark,
-            silver_path=minio_path,
+        logger.info(
+            f"Lecture des données Silver inspection depuis : {minio_path_inspection}"
         )
 
-        silver_count = dataframe.count()
+        dataframe_inspection = read_silver_parquet(
+            spark=spark,
+            silver_path=minio_path_inspection,
+        )
 
         logger.info(
-            f"Lecture Silver terminée : "
-            f"{silver_count:,} lignes."
+            f"Lecture des données Silver limite depuis : {minio_path_limite}"
         )
 
-        if silver_count == 0:
+        dataframe_limite = read_silver_parquet(
+            spark=spark,
+            silver_path=minio_path_limite
+        )
+
+        silver_inspection_count = dataframe_inspection.count()
+
+        silver_limite_count = dataframe_limite.count()
+
+        logger.info(
+            f"Lecture Silver inspection terminée : "
+            f"{silver_inspection_count:,} lignes."
+        )
+
+        logger.info(
+            f"Lecture Silver limite terminée : "
+            f"{silver_limite_count:,} lignes."
+        )
+
+        if silver_limite_count == 0 or silver_inspection_count == 0:
             logger.warning(
                 "Les données Silver sont vides."
             )
@@ -91,20 +120,20 @@ def build_gold() -> None:
         # =====================================================
 
         logger.info("Construction de Dim_time ...")
-        dim_time = build_dim_time(dataframe)
+        dim_time = build_dim_time(dataframe_inspection)
 
         logger.info("Construction de Dim_equipement ...")
-        dim_equipement = build_dim_equipement(dataframe)
+        dim_equipement = build_dim_equipement(dataframe_inspection,dataframe_limite)
 
         logger.info("Construction de Dim_user ...")
-        dim_user = build_dim_user(dataframe)
+        dim_user = build_dim_user(dataframe_inspection)
 
         # =====================================================
         # 4. Construction de la fact
         # =====================================================
 
         logger.info("Construction Table de fait Fact_inspection ...")
-        fact_inspection = build_fact_inspection(dataframe=dataframe,
+        fact_inspection = build_fact_inspection(dataframe=dataframe_inspection,
                                                 dim_time=dim_time,
                                                 dim_equipement=dim_equipement,
                                                 dim_user=dim_user
@@ -125,7 +154,7 @@ def build_gold() -> None:
                                           "dim_time"
         )
         quality.validate_required_columns(dim_equipement,
-                                          ["id_equipement","zone","instal"],
+                                          ["id_equipement","zone","instal","seuil_danger_temp","seuil_danger_vib_axiale","seuil_danger_vib_horiz","seuil_danger_vib_vert"],
                                           "dim_equipement"
         )
         quality.validate_required_columns(dim_user,
@@ -169,7 +198,7 @@ def build_gold() -> None:
         quality.validate_fact_uniqueness(fact_inspection)
 
         #validation augmentation des ligne
-        quality.validate_row_count_not_increased(dataframe,fact_inspection,"Silver","fact_inspection")
+        quality.validate_row_count_not_increased(dataframe_inspection,fact_inspection,"Silver","fact_inspection")
 
         logger.success("Gold Data Quality Validée avec Succés")
 
