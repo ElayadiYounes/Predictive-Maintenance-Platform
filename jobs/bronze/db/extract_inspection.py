@@ -22,15 +22,28 @@ def extract_inspection() -> None:
 
         logger.info("Lecture de la table inspection ...")
 
-        df = mysql_client.read_table("inspection")
+        df_inspection = mysql_client.read_table("inspection")
 
-        logger.info(f"Extraction terminée ({len(df):,} lignes).")
+        logger.info(f"Extraction d'inspections terminée ({len(df_inspection):,} lignes).")
+
+        logger.info("Lecture de la table limite ...")
+
+        df_limite = mysql_client.read_table("limite")
+
+        logger.info(f"Extraction de limite terminée ({len(df_limite):,} lignes).")
 
         minio_client.upload_dataframe(
-            dataframe=df,
+            dataframe=df_inspection,
             bucket_name=settings.BRONZE_BUCKET,
             file_name="inspection.parquet",
             prefix="inspection",
+        )
+
+        minio_client.upload_dataframe(
+            dataframe=df_limite,
+            bucket_name=settings.BRONZE_BUCKET,
+            file_name="limite.parquet",
+            prefix="limite",
         )
 
         logger.info("=" * 70)
