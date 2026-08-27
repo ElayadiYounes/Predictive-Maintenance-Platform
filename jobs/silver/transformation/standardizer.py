@@ -268,7 +268,7 @@ class InspectionStandardizer :
         return standardized_dataframe
 
 
-    
+
 
 
 
