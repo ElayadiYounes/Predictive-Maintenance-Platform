@@ -1,5 +1,3 @@
-from io import BytesIO
-
 import pandas as pd
 
 from jobs.common.logger import logger
