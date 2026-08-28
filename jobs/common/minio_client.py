@@ -2,9 +2,10 @@ import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 import pandas as pd
-from io import BytesIO
+
 from datetime import datetime, timezone
 
+from io import BytesIO
 
 from jobs.common.config import settings
 from jobs.common.logger import logger
@@ -300,3 +301,58 @@ class MinioStorageClient:
             )
 
             raise
+
+
+    def download_dataframe(self, bucket_name : str, object_path : str) -> pd.DataFrame:
+        """ Télécharge un fichier Parquet depuis MinIO et le retourne sous forme de DataFrame Pandas.
+         Parameters
+         ----------
+          bucket_name : str Bucket MinIO contenant le fichier.
+          object_path : str Chemin complet de l'objet dans le bucket.
+           Returns
+           -------
+            pd.DataFrame DataFrame Pandas contenant les données.
+             Examples
+              -------- >>>
+               client.download_dataframe(
+                ... bucket_name="gold",
+                 ... object_path="inspection/fact_inspection.parquet" ...
+                 )
+         """
+        logger.info(f"Telechargement le fichier Parquet : {bucket_name}/{object_path}")
+        try:
+            self.check_connection()
+            self.s3_client.head_bucket(Bucket=bucket_name)
+            with BytesIO() as buffer:
+                self.s3_client.download_fileobj(Bucket=bucket_name,
+                                                Key=object_path,
+                                                Fileobj=buffer,
+                )
+                buffer.seek(0)
+
+                dataframe = pd.read_parquet(buffer, engine="pyarrow", )
+
+            logger.success(f"Fichier téléchargé avec succès : {bucket_name}/{object_path} => avec ({len(dataframe):,} lignes)")
+            return dataframe
+
+        except ClientError as e:
+            error_code = (
+                e.response
+                .get("Error", {})
+                .get("Code")
+            )
+            if error_code in ("404", "NoSuchBucket", "NoSuchKey",):
+                logger.exception(f"Fichier ou bucket introuvable : " f"{bucket_name}/{object_path}")
+                raise DataLakeBucketNotFoundError(f"Objet '{object_path}' "
+                                              f"ou bucket '{bucket_name}' introuvable.",
+                                              str(e),
+               )
+            logger.exception("Erreur lors du téléchargement depuis MinIO.")
+            raise DataLakeConnectionError(
+            "Erreur lors du téléchargement depuis MinIO.",
+                                      str(e),
+            )
+        except Exception:
+            logger.exception("Erreur inattendue lors du téléchargement.")
+            raise
+
