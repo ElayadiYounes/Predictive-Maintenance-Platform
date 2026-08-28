@@ -19,13 +19,16 @@ def read_gold_table(table_name : str) -> pd.DataFrame:
     logger.info("=" * 70)
     logger.info("GOLD EXTRACTION START")
     logger.info("=" * 70)
+    if not table_name:
+        raise ValueError("Le nom de la table Gold ne peut pas être vide.")
+
     minio_client = MinioStorageClient()
-    object_path = f"inspection/{table_name}"
+    prefix = f"inspection/{table_name}"
 
     logger.info(f"Lecture de la table {table_name} ...")
-    dataframe = minio_client.download_dataframe(settings.GOLD_BUCKET, object_path)
+    dataframe = minio_client.read_parquet_prefix(settings.GOLD_BUCKET, prefix)
 
-    logger.info(f"Lecture de la table {table_name} Terminé avec succès ")
+    logger.info(f"Lecture de la table {table_name} Terminé avec succès : {len(dataframe):,} lignes.")
 
     return dataframe
 

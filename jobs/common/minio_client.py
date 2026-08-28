@@ -356,3 +356,88 @@ class MinioStorageClient:
             logger.exception("Erreur inattendue lors du téléchargement.")
             raise
 
+
+    def read_parquet_prefix(self, bucket_name : str, prefix : str) -> pd.DataFrame:
+        """ Lit tous les fichiers Parquet présents sous un préfixe MinIO et les retourne sous forme d'un unique DataFrame Pandas.
+         Parameters
+         ----------
+         bucket_name : str Bucket MinIO contenant les données.
+         prefix : str Préfixe S3 correspondant à la table.
+         Exemple :
+         ----------
+         inspection/fact_inspection
+         Returns
+         -------
+         pd.DataFrame DataFrame contenant l'ensemble des données Parquet.
+         Raises
+         ------
+         DataLakeBucketNotFoundError Si le bucket n'existe pas.
+         NoPartitionFoundError Si aucun fichier Parquet n'est trouvé.
+         """
+
+        logger.info(f"Lecture des fichiers parquet sous :  {bucket_name}/{prefix}")
+        try:
+            self.check_connection()
+            self.s3_client.head_bucket(Bucket=bucket_name)
+            # -------------------------------------------------
+            # Recherche des fichiers Parquet #
+            # -------------------------------------------------
+            parquet_keys = []
+            paginator = self.s3_client.get_paginator("list_objects_v2")
+            pages = paginator.paginate(Bucket=bucket_name, Prefix=prefix.rstrip("/") + "/", )
+            for page in pages:
+                if "Contents" not in page:
+                    continue
+
+                for obj in page["Contents"]:
+                    object_key = obj["Key"]
+                    if object_key.lower().endswith(".parquet"):
+                        parquet_keys.append(object_key)
+            # -------------------------------------------------
+            # Aucun fichier trouvé
+            # -------------------------------------------------
+            if not parquet_keys:
+                logger.error(f"Aucun fichier Parquet trouvé sous '{bucket_name}/{prefix}'.")
+                raise NoPartitionFoundError(f"Aucun fichier Parquet trouvé sous '{bucket_name}/{prefix}'.")
+
+            logger.info(f"{len(parquet_keys)} fichier(s) Parquet trouvé(s).")
+            # -------------------------------------------------
+            # Lecture des fichiers
+            # -------------------------------------------------
+            dataframes = []
+            for object_key in parquet_keys:
+                logger.debug(f"Lecture du fichier : {bucket_name}/{object_key}")
+                response = self.s3_client.get_object(Bucket=bucket_name, Key=object_key, )
+                parquet_bytes = response["Body"].read()
+                dataframe = pd.read_parquet(BytesIO(parquet_bytes), engine="pyarrow", )
+                dataframes.append(dataframe)
+
+            # -------------------------------------------------
+            # Fusion des fichiers
+            # -------------------------------------------------
+            dataframe = pd.concat(dataframes, ignore_index=True, )
+            logger.success(f"Lecture Parquet terminée : " f"{len(dataframe):,} lignes, {len(dataframe.columns)} colonnes.")
+            return dataframe
+
+        except ClientError as e:
+            error_code = (
+                e.response
+                .get("Error", {})
+                .get("Code")
+            )
+            if error_code in ("404", "NoSuchBucket", "NoSuchKey",):
+                logger.exception(f"Bucket introuvable : " f"{bucket_name}")
+                raise DataLakeBucketNotFoundError(f"Bucket '{bucket_name}' introuvable.", str(e), )
+            logger.exception("Erreur lors de la lecture " "des données Parquet depuis MinIO.")
+            raise DataLakeConnectionError(
+                "Erreur lors de la lecture " "des données Parquet depuis MinIO.",
+                         str(e),
+            ) from e
+
+        except Exception:
+            logger.exception("Erreur inattendue lors de la " "lecture des données Parquet.")
+            raise
+
+
+
+
