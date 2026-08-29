@@ -174,6 +174,99 @@ class InspectionIsolationForest:
         return self.dedicated_models
 
 
+    def predict(self,dataframe : pd.DataFrame) -> pd.DataFrame:
+        """ Détecte les anomalies avec la stratégie hybride.
+        Pour chaque inspection :
+         modèle dédié disponible
+         ↓
+         OUI → modèle dédié
+         ↓
+         NON → modèle global
+         Returns
+         -------
+         pd.DataFrame DataFrame contenant : - id_inspection - id_equipement - anomaly_score - anomaly_flag - model_type
+         """
+
+        if self.global_model is None:
+            raise RuntimeError("Le modèle global n'est pas entraîné.")
+
+        if dataframe is None or dataframe.empty:
+            raise ValueError("Le DataFrame de prédiction est vide.")
+
+        missing_columns = [
+            column
+            for column in self.feature_columns
+            if column not in dataframe.columns
+        ]
+
+        if missing_columns:
+            raise ValueError(f"Features absentes du DataFrame : {missing_columns}")
+
+        if "id_equipement" not in dataframe.columns:
+            raise ValueError("La colonne 'id_equipement' est obligatoire.")
+
+        logger.info(f"Détection d'anomalies sur {len(dataframe):,} inspections...")
+
+        results = dataframe[
+            [column for column in ["id_inspection", "id_equipement", ]
+             if column in dataframe.columns
+            ]
+        ].copy()
+
+        results["anomaly_score"] = None
+        results["anomaly_flag"] = None
+        results["model_type"] = None
+
+        for equipment_id, indexes in dataframe.groupby("id_equipement").groups.items():
+
+            equipment_data = dataframe.loc[indexes, self.feature_columns,].copy()
+
+            valid_mask = ~equipment_data.isna().any(axis=1)
+
+            valid_data = equipment_data.loc[valid_mask]
+
+            if valid_data.empty:
+                continue
+
+            if equipment_id in self.dedicated_models:
+                model = self.dedicated_models[equipment_id]
+                model_type = "dedicated"
+
+            else:
+                model = self.global_model
+                model_type = "global"
+
+            # decision_function :
+            # score élevé → observation normale
+            # score faible → observation atypique
+
+            raw_scores = model.decision_function(valid_data)
+
+            # On inverse le score afin que :
+            # score élevé = anomalie importante
+
+            anomaly_scores = -raw_scores
+            predictions = model.predict(valid_data)
+
+            # Isolation Forest :
+            # 1 = normal
+            # -1 = anomalie
+
+            anomaly_flags = (predictions == -1).astype(int)
+            results.loc[valid_data.index, "anomaly_score",] = anomaly_scores
+            results.loc[valid_data.index, "anomaly_flag",] = anomaly_flags
+            results.loc[valid_data.index, "model_type",] = model_type
+
+            results["anomaly_score"] = pd.to_numeric(results["anomaly_score"], errors="coerce", )
+            results["anomaly_flag"] = pd.to_numeric(results["anomaly_flag"], errors="coerce", ).astype("Int64")
+
+            logger.success("Détection d'anomalies terminée.")
+
+            return results
+
+        
+
+
 
 
 
