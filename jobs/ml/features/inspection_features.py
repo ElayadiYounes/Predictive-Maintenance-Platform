@@ -18,36 +18,48 @@ class InspectionFeatureEngineering :
         - prédiction de panne ;
         - RUL.
     """
+    # Toutes les colonnes qui doivent obligatoirement être présentes dans la table Gold
     REQUIRED_COLUMNS = [
-        #les identifients
+        # Les identifiants
         "id_inspection",
         "id_equipement",
 
-        #temperature (avant)
+        # Température (avant)
         "t_av",
 
-        #vibration
-        "av_ax",
-        "av_h",
-        "av_v",
-        "ar_ax",
-        "ar_h",
-        "ar_v",
+        # Vibration
+        "av_ax", "av_h", "av_v",
+        "ar_ax", "ar_h", "ar_v",
 
-        # Seuils métier 
+        # Caractéristiques techniques binaires
+        "p_produit",
+        "huile_graisse",
+        "ailette", "boulonneries",
+        "cable",
+        "plaque_a_borne",
+        "graisseur",
+
+        # Seuils métier
         "seuil_danger_temp",
         "seuil_danger_vib_axiale",
         "seuil_danger_vib_horiz",
         "seuil_danger_vib_vert",
 
-        # Ratios par rapport aux seuils
+        # Ratios pré-calculés par rapport aux seuils
         "ratio_temp",
         "ratio_vib_axiale",
         "ratio_vib_horiz",
         "ratio_vib_vert",
     ]
 
+    # Uniquement les features numériques générées ou conservées pour l'entraînement du modèle
     FEATURE_COLUMNS = [
+        # Température & Ratios
+        "t_av",
+        "ratio_temp",
+        "ratio_vib_axiale",
+        "ratio_vib_horiz",
+        "ratio_vib_vert",
 
         # Vibration axiale
         "vibration_axiale_max",
@@ -64,6 +76,14 @@ class InspectionFeatureEngineering :
         "vibration_vert_mean",
         "vibration_vert_difference",
 
+        # Variables binaires (je les retirerais dans la première version)
+        #"p_produit",
+        #"huile_graisse",
+        #"ailette",
+        #"boulonneries",
+        #"cable",
+        #"plaque_a_borne",
+        #"graisseur"
     ]
 
     ###################### Methodes ##########################
@@ -80,7 +100,7 @@ class InspectionFeatureEngineering :
             raise ValueError("Le DataFrame d'inspection est None.")
 
         if dataframe.empty:
-            raise ValueError("Le DataFrame d'inspection est None.")
+            raise ValueError("Le DataFrame d'inspection est Vide.")
 
         missing_columns = [column for column in self.REQUIRED_COLUMNS
                            if column not in dataframe.columns
@@ -153,15 +173,12 @@ class InspectionFeatureEngineering :
             "id_inspection",
             "id_equipement",
 
-            "t_av",
-
             *self.FEATURE_COLUMNS,
 
             "seuil_danger_temp",
             "seuil_danger_vib_axiale",
             "seuil_danger_vib_horiz",
             "seuil_danger_vib_vert",
-
         ]
         features = dataframe[output_columns].copy()
 
