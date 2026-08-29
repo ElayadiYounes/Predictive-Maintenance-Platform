@@ -265,18 +265,3 @@ class InspectionIsolationForest:
             return results
 
         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
