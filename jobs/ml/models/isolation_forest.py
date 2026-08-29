@@ -123,7 +123,58 @@ class InspectionIsolationForest:
              f"{len(feature_columns)} features."
         )
         return model
-    
+
+    # =========================================================
+    # Modèles dédiés
+    # =========================================================
+
+    def train_dedicated_models(self,dataframe : pd.DataFrame) -> dict[int, IsolationForest]:
+        """ Entraîne un modèle Isolation Forest spécifique pour chaque équipement disposant d'un nombre suffisant d'inspections.
+        Les équipements avec trop peu d'observations sont ignorés et utiliseront le modèle global.
+        Returns
+        -------
+        dict[int, IsolationForest] Dictionnaire : id_equipement -> modèle dédié.
+        """
+        if self.global_model is None:
+            raise RuntimeError("Le modèle global doit être entraîné avant " "les modèles dédiés.")
+
+        if "id_equipement" not in dataframe.columns:
+            raise ValueError("La colonne 'id_equipement' est obligatoire.")
+
+        logger.info("Entraînement des modèles dédiés par équipement...")
+
+        self.dedicated_models = {}
+        grouped = dataframe.groupby("id_equipement")
+
+        for id_equipment, equipment_data in grouped:
+            valid_data = (
+                equipment_data[self.feature_columns]
+                .dropna()
+            )
+            sample_count = len(valid_data)
+
+            if sample_count < self.min_samples_dedicated:
+                logger.info(
+                     f"Équipement {id_equipment} : "
+                     f"{sample_count} observations. " "Modèle dédié non entraîné → fallback global."
+                )
+                continue
+
+            model = self._create_modele()
+            model.fit(valid_data)
+            self.dedicated_models[id_equipment] = model
+
+            logger.success(
+                f"Modèle dédié entraîné pour équipement " 
+                f"{id_equipment} : " f"{sample_count} observations."
+            )
+
+        logger.info(f"Nombre de modèles dédiés entraînés : {len(self.dedicated_models)}")
+
+        return self.dedicated_models
+
+
+
 
 
 
