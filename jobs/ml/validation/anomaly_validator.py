@@ -55,9 +55,93 @@ class InspectionAnomalyValidator:
         "model_type",
     ]
 
+    ALERT_COLUMNS = [
+        "threshold_alert_temp",
+        "threshold_alert_vib_axiale",
+        "threshold_alert_vib_horiz",
+        "threshold_alert_vib_vert",
+    ]
+
     def __init__(self)->None:
         """Initialise le validateur métier."""
         pass
 
+    def _validate_input(self, dataframe : pd.DataFrame) -> None:
+        """ Vérifie que le DataFrame contient les colonnes nécessaires. """
+        if dataframe is None:
+            raise ValueError("Le DataFrame d'anomalies est None.")
+        if dataframe.empty:
+            raise ValueError("Le DataFrame d'anomalies est Vide.")
+
+        required_columns = [
+            self.REQUIRED_COLUMNS +
+            self.MODEL_COLUMNS
+        ]
+
+        missing_columns = [
+            column
+            for column in required_columns
+            if column not in dataframe.columns
+        ]
+
+        if missing_columns:
+            raise ValueError( f"Colonnes nécessaires à la validation absentes : {missing_columns}" )
+
+
+
+
+     #-------------------- Validation par Mesure-------------------------------
+
+    @staticmethod
+    def _build_threshold_alerts(dataframe : pd.DataFrame)->pd.DataFrame:
+        """ Construit les alertes métier à partir des mesures et des seuils propres à chaque équipement. """
+
+        dataframe = dataframe.copy()
+
+        # ------ Température --------
+        dataframe["threshold_alert_temp"] =(
+           dataframe["ratio_temp"] >= 1
+        ).astype(int)
+
+        # ------ vibration Axiale --------
+        dataframe["threshold_alert_vib_axiale"] = (
+            dataframe["ratio_vib_axiale"] >= 1
+        ).astype(int)
+
+        # ------ vibration horizontal--------
+        dataframe["threshold_alert_vib_horiz"] = (
+            dataframe["ratio_vib_horiz"] >= 1
+        ).astype(int)
+
+        # ------ vibration vertical --------
+        dataframe["threshold_alert_vib_vert"] = (
+            dataframe["ratio_vib_vert"] >= 1
+        ).astype(int)
+
+        return dataframe
+
+    #---------------------------- Validation Global -----------------------------
+
+    def _build_threshold_alert_global(self,dataframe : pd.DataFrame)->pd.DataFrame:
+        """ Détermine si au moins un seuil métier est dépassé. """
+        dataframe = dataframe.copy()
+
+        dataframe["threshold_alert"] =(
+            dataframe[self.ALERT_COLUMNS].max(axis=1)
+        ).astype(int)
+
+        return dataframe
+
+    # Validation de l'anomalie ML
     
+
+
+
+
+
+
+
+
+
+
 
