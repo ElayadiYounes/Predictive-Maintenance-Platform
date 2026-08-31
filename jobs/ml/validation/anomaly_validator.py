@@ -133,7 +133,75 @@ class InspectionAnomalyValidator:
         return dataframe
 
     # Validation de l'anomalie ML
+    @staticmethod
+    def _build_validated_anomaly(dataframe : pd.DataFrame) -> pd.DataFrame:
+        """ Combine la détection Isolation Forest et la validation par seuil métier.
+         Une anomalie est validée si :
+         anomaly_flag == 1 ET threshold_alert == 1
+         """
+        dataframe = dataframe.copy()
+
+        dataframe["validated_anomaly"] = (
+            (
+                dataframe["anomaly_flag"] == 1
+            )
+            &
+            (
+                dataframe["threshold_alert"] == 1
+            )
+        ).astype(int)
+
+        return dataframe
+
+    #------------------------ Classification métier -------------------------
+    @staticmethod
+    def _build_anomaly_status(dataframe : pd.DataFrame) -> pd.DataFrame:
+        """ Produit un statut permettant de distinguer les différents cas ML / métier. """
+        dataframe = dataframe.copy()
+        dataframe["anomaly_status"] = "normal"
+
+        #-------------- 1er cas : ML uniquement -------------------
+        dataframe.loc[
+            (
+                dataframe["anomaly_flag"] == 1
+            )
+            &
+            (
+                dataframe["threshold_alert"] == 0
+            ),
+            "anomaly_status"
+        ] = "ml_anomaly_only"
+
+        #------------------- 2eme cas : seuil métier uniquement -------------------------
+
+        dataframe.loc[
+            (
+                dataframe["anomaly_flag"] == 0
+            )
+            &
+            (
+                dataframe["threshold_alert"] == 1
+            ),
+            "anomaly_status"
+        ] = "threshold_alert_only"
+
+        #------------------- 3eme cas : seuils + ML ---------------------
+        dataframe.loc[
+            (
+                dataframe["anomaly_flag"] == 1
+            )
+            &
+            (
+                dataframe["threshold_alert"] == 1
+            ),
+            "anomaly_status"
+        ] = "validated_anomaly"
+
+        return dataframe
+
     
+
+
 
 
 
