@@ -199,7 +199,69 @@ class InspectionAnomalyValidator:
 
         return dataframe
 
-    
+
+
+    #--------------------- Pipeline Validation -------------------
+    def validate(self,dataframe : pd.DataFrame) -> pd.DataFrame:
+        """ Valide les anomalies détectées par Isolation Forest.
+         Parameters
+         ----------
+         dataframe : pd.DataFrame Dataset contenant les données d'inspection, les seuils métier et les résultats Isolation Forest.
+         Returns
+         -------
+         pd.DataFrame Dataset enrichi avec :
+         - threshold_alert_temperature - threshold_alert_vib_axiale
+         - threshold_alert_vib_horiz - threshold_alert_vib_vert
+         - threshold_alert - validated_anomaly - anomaly_status
+         """
+
+        logger.info("=" * 70)
+        logger.info("INSPECTION ANOMALY VALIDATION START")
+        logger.info("=" * 70)
+
+        self._validate_input(dataframe)
+        logger.info(f"Dataset reçu : {len(dataframe):,} lignes.")
+
+        #étape 1 : validation par mesure
+        dataframe = self._build_threshold_alerts(dataframe)
+
+        #étape 2 : validation global
+        dataframe = self._build_threshold_alert_global(dataframe)
+
+        #étape 3 : validation ml
+        dataframe = self._build_validated_anomaly(dataframe)
+
+        #étape final : mettre le status de chaque validation
+        dataframe = self._build_anomaly_status(dataframe)
+
+        #statistique de validation
+
+        ml_anomaly = int(
+            dataframe["anomaly_flag"]
+            .fillna(0)
+            .sum()
+        )
+
+        threshold_alerts = int(
+            dataframe["threshold_alert"]
+            .fillna(0)
+            .sum()
+        )
+
+        validated_anomaly = int(
+            dataframe["validated_anomaly"]
+            .fillna(0)
+            .sum()
+        )
+
+        logger.info(f"Les Anomalies detectée par Isolation Forest :  {ml_anomaly} ")
+        logger.info(f"Les alerts detectée par les Seuils Métier : {threshold_alerts} ")
+        logger.info(f"Les Anomalies confirmée par Isolation Forest ET Seuils Métier : {validated_anomaly} ")
+
+        logger.success("Validation des Anomalies Terminée")
+
+        return dataframe
+
 
 
 
