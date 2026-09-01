@@ -142,7 +142,7 @@ def transform_inspection() -> None:
         dataframe = standardizer.limite_standardize_column_names(dataframe)
 
         # Validation les colonnes indispensable
-        quality.validate_required_columns(dataframe)
+        quality.limite_validate_required_columns(dataframe)
 
         # Data Cleaning
         dataframe = cleaner.limite_clean(dataframe)

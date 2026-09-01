@@ -231,7 +231,7 @@ class InspectionStandardizer :
 
         standardized_dataframe = dataframe
 
-        for old_name , new_name in self.LIMITE_COLUMNS :
+        for old_name , new_name in self.LIMITE_COLUMNS.items() :
             if old_name in standardized_dataframe.columns:
                 logger.debug(f"Colonne Renommée : {old_name} => {new_name}")
                 standardized_dataframe = (
