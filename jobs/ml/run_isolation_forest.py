@@ -78,6 +78,11 @@ def run_isolation_forest():
 
         logger.info("Etape 5/5 : Ecriture Isolation Forest ET modèles entrainées ...")
         writer = AnomalyWriter()
+
+        logger.info("Sauvegarde de fact_inspection_anomaly...")
+
+        writer.write_anomaly_results(dataframe=dataframe_anomalys)
+
         if isolation_forest.global_model is None:
             raise ValueError("LE modèle global Isolation Forest n'est pas disponible")
 

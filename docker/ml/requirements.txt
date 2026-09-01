@@ -27,3 +27,6 @@ matplotlib>=3.9
 
 # Détection d'anomalies avancée (optionnel)
 scipy>=1.13
+
+# Hive / Spark Thrift Server
+PyHive[hive]
