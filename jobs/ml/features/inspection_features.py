@@ -39,12 +39,6 @@ class InspectionFeatureEngineering :
         "plaque_a_borne",
         "graisseur",
 
-        # Seuils métier
-        "seuil_danger_temp",
-        "seuil_danger_vib_axiale",
-        "seuil_danger_vib_horiz",
-        "seuil_danger_vib_vert",
-
         # Ratios pré-calculés par rapport aux seuils
         "ratio_temp",
         "ratio_vib_axiale",
@@ -175,10 +169,6 @@ class InspectionFeatureEngineering :
 
             *self.FEATURE_COLUMNS,
 
-            "seuil_danger_temp",
-            "seuil_danger_vib_axiale",
-            "seuil_danger_vib_horiz",
-            "seuil_danger_vib_vert",
         ]
         features = dataframe[output_columns].copy()
 
