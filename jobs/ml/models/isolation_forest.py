@@ -66,8 +66,8 @@ class InspectionIsolationForest:
 
         missing_feature_columns = [
             column
-            for column in dataframe.columns
-            if column not in feature_columns
+            for column in feature_columns
+            if column not in dataframe.columns
         ]
         if missing_feature_columns:
             raise ValueError("Features absentes du DataFrame : " f"{missing_feature_columns}")
