@@ -5,6 +5,7 @@ from jobs.ml.features.inspection_features import InspectionFeatureEngineering
 from jobs.ml.models.isolation_forest import InspectionIsolationForest
 from jobs.ml.validation.anomaly_validator import InspectionAnomalyValidator
 from jobs.ml.writer.anomaly_writer import AnomalyWriter
+from jobs.ml.catalog.ml_catalog import AnomalyCatalog
 
 def run_isolation_forest():
     """
@@ -82,6 +83,10 @@ def run_isolation_forest():
         logger.info("Sauvegarde de fact_inspection_anomaly...")
 
         writer.write_anomaly_results(dataframe=dataframe_anomalys)
+        logger.info("Enregistrement de fact_inspection_anomaly dans le catalogue Hive...")
+        catalog = AnomalyCatalog()
+        catalog.register_anomaly_table()
+        logger.success("fact_inspection_anomaly enregistrée " "dans le catalogue Hive.")
 
         if isolation_forest.global_model is None:
             raise ValueError("LE modèle global Isolation Forest n'est pas disponible")
@@ -110,6 +115,8 @@ def run_isolation_forest():
                 model_scope="equipment",
                 id_equipement=id_equipement,
             )
+
+
         logger.success("Tous les modèles Isolation Forest ont été sauvegardés avec succès.")
 
     except Exception :
