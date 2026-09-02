@@ -95,8 +95,16 @@ class AnomalyCatalog:
                     anomaly_score DOUBLE,
                     anomaly_flag INT,
                     model_type STRING,
+                    model_name STRING,
                     model_version STRING,
-                    prediction_date TIMESTAMP
+                    prediction_date TIMESTAMP,
+                    alert_temperature INT,
+                    alert_vib_axiale INT,
+                    alert_vib_horiz INT,
+                    alert_vib_vert INT,
+                    threshold_alert INT,
+                    validated_anomaly INT,
+                    anomaly_status STRING
                 )
                 STORED AS PARQUET
                 LOCATION '{self.TABLE_LOCATION}'

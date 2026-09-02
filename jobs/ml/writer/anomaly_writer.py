@@ -23,7 +23,12 @@ class AnomalyWriter:
         "anomaly_flag",
         "model_type",
     ]
+
     OPTIONAL_COLUMNS = [
+        "alert_temperature",
+        "alert_vib_axiale",
+        "alert_vib_horiz",
+        "alert_vib_vert",
         "threshold_alert",
         "validated_anomaly",
         "anomaly_status",
@@ -66,8 +71,8 @@ class AnomalyWriter:
         """
         result = dataframe.copy()
 
-        if "model_type" not in result.columns:
-            result["model_type"] = "isolation_forest"
+        if "model_name" not in result.columns:
+            result["model_name"] = "isolation_forest"
 
         if "model_version" not in result.columns:
             result["model_version"] = "v1"
@@ -130,7 +135,7 @@ class AnomalyWriter:
 
 
     def write_anomaly_model(self, model, model_name : str = "isolation_forest",
-                             model_version : str = "v1", model_scope : str = "global",
+                             model_version : str = "v1", model_type : str = "global",
                              id_equipement : int | None = None) -> None:
         """ Sauvegarde un modèle ML dans le bucket Models.
          Parameters
@@ -138,9 +143,9 @@ class AnomalyWriter:
          model : Modèle entraîné compatible avec joblib.
          model_name : str Type du modèle.
          model_version : str Version du modèle.
-         model_scope : str Portée du modèle : global equipment
+         model_type : str Portée du modèle : global equipment
          id_equipement: int | None Identifiant équipement pour un modèle dédié à un équipement.
-         Exemples
+         Examples
          --------
          Modèle global :
           models/
@@ -166,13 +171,13 @@ class AnomalyWriter:
             raise ValueError("model_name ne peut pas être vide.")
         if not model_version:
             raise ValueError("model_version ne peut pas être vide.")
-        if model_scope not in {"global", "equipment", }:
+        if model_type not in {"global", "equipment", }:
             raise ValueError("model_scope doit être 'global' " "ou 'equipment'.")
-        if model_scope == "equipment" and id_equipement is None:
+        if model_type == "equipment" and id_equipement is None:
             raise ValueError("equipment_id est obligatoire pour " "un modèle dédié à un équipement.")
 
         #construction du chemin
-        if model_scope == "global" :
+        if model_type == "global" :
             object_key = (
                 f"{self.MODEL_BASE_PATH}/"
                 f"{model_name}/"

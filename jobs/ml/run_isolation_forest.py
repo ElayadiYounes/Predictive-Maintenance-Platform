@@ -67,13 +67,21 @@ def run_isolation_forest():
         logger.info(f"Nombre de modèles dédiés : {len(dedicated_models)}.")
 
         logger.info("Détection des Anomalies ...")
-        dataframe_anomalys = isolation_forest.predict(dataframe=features)
+        ml_results = isolation_forest.predict(dataframe=features)
+
+        alert_columns = feature_engineering.CONTEXT_COLUMNS
+        dataframe_anomalys = ml_results.merge(
+            features[alert_columns],
+            on=["id_inspection", "id_equipement"],
+            how="left",
+            validate="one_to_one",
+        )
         logger.info(f"Résultats générés : " f"{len(dataframe_anomalys):,} lignes.")
 
 
         logger.info("Etape 4/5 : Validation Isolation Forest...")
         validator = InspectionAnomalyValidator()
-        validator.validate(dataframe=dataframe_anomalys)
+        dataframe_anomalys = validator.validate(dataframe=dataframe_anomalys)
 
         #écriture des anomalies + models
 
@@ -96,7 +104,7 @@ def run_isolation_forest():
             model=isolation_forest.global_model,
             model_name="isolation_forest",
             model_version="v1",
-            model_scope="global",
+            model_type="global",
         )
 
         dedicated_models = isolation_forest.dedicated_models
@@ -112,7 +120,7 @@ def run_isolation_forest():
                 model=model,
                 model_name="isolation_forest",
                 model_version="v1",
-                model_scope="equipment",
+                model_type="equipment",
                 id_equipement=id_equipement,
             )
 

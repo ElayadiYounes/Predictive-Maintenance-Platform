@@ -44,6 +44,12 @@ class InspectionFeatureEngineering :
         "ratio_vib_axiale",
         "ratio_vib_horiz",
         "ratio_vib_vert",
+
+        # Les Alerts de danger
+        "alert_temperature",
+        "alert_vib_axiale",
+        "alert_vib_horiz",
+        "alert_vib_vert",
     ]
 
     # Uniquement les features numériques générées ou conservées pour l'entraînement du modèle
@@ -78,6 +84,15 @@ class InspectionFeatureEngineering :
         #"cable",
         #"plaque_a_borne",
         #"graisseur"
+    ]
+
+    CONTEXT_COLUMNS = [
+        "id_inspection",
+        "id_equipement",
+        "alert_temperature",
+        "alert_vib_axiale",
+        "alert_vib_horiz",
+        "alert_vib_vert",
     ]
 
     ###################### Methodes ##########################
@@ -164,11 +179,8 @@ class InspectionFeatureEngineering :
             raise ValueError("Aucune observation valide après " "la construction des features.")
 
         output_columns = [
-            "id_inspection",
-            "id_equipement",
-
+            *self.CONTEXT_COLUMNS,
             *self.FEATURE_COLUMNS,
-
         ]
         features = dataframe[output_columns].copy()
 

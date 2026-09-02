@@ -3,52 +3,50 @@ from jobs.common.logger import logger
 
 
 class InspectionAnomalyValidator:
-    """ Valide les anomalies détectées par Isolation Forest à partir des seuils métier propres à chaque équipement.
-    Logique :
-    Isolation Forest
-       |
-       | anomaly_flag
-       v
-    Validation seuils
-       |
-       v
-    validated_anomaly
+    """
+    Valide les anomalies détectées par Isolation Forest
+    en les confrontant aux alertes métier calculées dans Gold.
+
+    Logique
+    -------
+    Gold
+        |
+        ├── alert_temperature
+        ├── alert_vib_axiale
+        ├── alert_vib_horiz
+        └── alert_vib_vert
+        |
+        v
+    threshold_alert
+        |
+        +----------------------+
+        |                      |
+        v                      v
+    anomaly_flag          threshold_alert
+        |                      |
+        +----------+-----------+
+                   |
+                   v
+          validated_anomaly
+
     Une anomalie est considérée comme validée lorsque :
-    anomaly_flag == 1 ET au moins une mesure dépasse son seuil métier.
+        anomaly_flag == 1
+        ET
+        threshold_alert == 1.
     """
 
     REQUIRED_COLUMNS = [
-        # Les identifiants
+        # Identifiants
         "id_inspection",
         "id_equipement",
 
-        # Température (avant)
-        "t_av",
-
-        # Vibration
-        "av_ax", "av_h", "av_v",
-        "ar_ax", "ar_h", "ar_v",
-
-        # Caractéristiques techniques binaires
-        "p_produit",
-        "huile_graisse",
-        "ailette", "boulonneries",
-        "cable",
-        "plaque_a_borne",
-        "graisseur",
-
-        # Seuils métier
-        "seuil_danger_temp",
-        "seuil_danger_vib_axiale",
-        "seuil_danger_vib_horiz",
-        "seuil_danger_vib_vert",
-
-        # Ratios pré-calculés par rapport aux seuils
-        "ratio_temp",
-        "ratio_vib_axiale",
-        "ratio_vib_horiz",
-        "ratio_vib_vert",
+        # Alertes métier calculées dans Gold
+        "alert_temperature",
+        "alert_vib_axiale",
+        "alert_vib_horiz",
+        "alert_vib_vert",
     ]
+
     MODEL_COLUMNS = [
         "anomaly_score",
         "anomaly_flag",
@@ -56,10 +54,10 @@ class InspectionAnomalyValidator:
     ]
 
     ALERT_COLUMNS = [
-        "threshold_alert_temp",
-        "threshold_alert_vib_axiale",
-        "threshold_alert_vib_horiz",
-        "threshold_alert_vib_vert",
+        "alert_temperature",
+        "alert_vib_axiale",
+        "alert_vib_horiz",
+        "alert_vib_vert",
     ]
 
     def __init__(self)->None:
@@ -74,8 +72,8 @@ class InspectionAnomalyValidator:
             raise ValueError("Le DataFrame d'anomalies est Vide.")
 
         required_columns = [
-            self.REQUIRED_COLUMNS +
-            self.MODEL_COLUMNS
+            self.REQUIRED_COLUMNS
+            + self.MODEL_COLUMNS
         ]
 
         missing_columns = [
@@ -87,38 +85,6 @@ class InspectionAnomalyValidator:
         if missing_columns:
             raise ValueError( f"Colonnes nécessaires à la validation absentes : {missing_columns}" )
 
-
-
-
-     #-------------------- Validation par Mesure-------------------------------
-
-    @staticmethod
-    def _build_threshold_alerts(dataframe : pd.DataFrame)->pd.DataFrame:
-        """ Construit les alertes métier à partir des mesures et des seuils propres à chaque équipement. """
-
-        dataframe = dataframe.copy()
-
-        # ------ Température --------
-        dataframe["threshold_alert_temp"] =(
-           dataframe["ratio_temp"] >= 1
-        ).astype(int)
-
-        # ------ vibration Axiale --------
-        dataframe["threshold_alert_vib_axiale"] = (
-            dataframe["ratio_vib_axiale"] >= 1
-        ).astype(int)
-
-        # ------ vibration horizontal--------
-        dataframe["threshold_alert_vib_horiz"] = (
-            dataframe["ratio_vib_horiz"] >= 1
-        ).astype(int)
-
-        # ------ vibration vertical --------
-        dataframe["threshold_alert_vib_vert"] = (
-            dataframe["ratio_vib_vert"] >= 1
-        ).astype(int)
-
-        return dataframe
 
     #---------------------------- Validation Global -----------------------------
 
@@ -222,13 +188,10 @@ class InspectionAnomalyValidator:
         self._validate_input(dataframe)
         logger.info(f"Dataset reçu : {len(dataframe):,} lignes.")
 
-        #étape 1 : validation par mesure
-        dataframe = self._build_threshold_alerts(dataframe)
-
-        #étape 2 : validation global
+        #étape 1 : validation global
         dataframe = self._build_threshold_alert_global(dataframe)
 
-        #étape 3 : validation ml
+        #étape 2 : validation ml
         dataframe = self._build_validated_anomaly(dataframe)
 
         #étape final : mettre le status de chaque validation
