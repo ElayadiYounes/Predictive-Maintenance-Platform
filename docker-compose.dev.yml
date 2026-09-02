@@ -86,6 +86,9 @@ services:
     networks:
       - ocp-network
 
+    env_file:
+      - .env.dev
+
     environment:
 
       APP_ENV: ${APP_ENV}
@@ -94,6 +97,8 @@ services:
 
       # Spark
       SPARK_MASTER_URL: spark://spark-master:${SPARK_MASTER_PORT}
+      SPARK_THRIFT_HOST: ${SPARK_THRIFT_HOST}
+      SPARK_THRIFT_PORT: ${SPARK_THRIFT_PORT}
 
       HIVE_METASTORE_URI: thrift://hive-metastore:9083
 
@@ -111,7 +116,7 @@ services:
       MODELS_BUCKET: ${MODELS_BUCKET}
 
     volumes:
-      - ./jobs/ml:/app/jobs
+      - ./jobs:/app/jobs
 
     logging:
       driver: json-file

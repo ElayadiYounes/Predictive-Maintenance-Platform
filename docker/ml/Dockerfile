@@ -17,7 +17,7 @@ RUN python -m pip install --upgrade pip && \
     --no-cache-dir \
     -r /tmp/requirements.txt
 
-COPY jobs/ml /app/jobs
+COPY jobs /app/jobs
 
 RUN useradd --create-home --uid 1004 mluser && \
     chown -R mluser:mluser /app

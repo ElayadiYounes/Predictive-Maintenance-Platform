@@ -28,5 +28,8 @@ matplotlib>=3.9
 # Détection d'anomalies avancée (optionnel)
 scipy>=1.13
 
-# Hive / Spark Thrift Server
-PyHive[hive]
+# Hive / Spark Thrift Server (Solution 100% Python sans code C)
+pure-sasl
+thrift>=0.16.0
+thrift-sasl>=0.4.3
+PyHive

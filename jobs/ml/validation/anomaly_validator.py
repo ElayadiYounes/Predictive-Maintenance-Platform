@@ -71,11 +71,8 @@ class InspectionAnomalyValidator:
         if dataframe.empty:
             raise ValueError("Le DataFrame d'anomalies est Vide.")
 
-        required_columns = [
-            self.REQUIRED_COLUMNS
-            + self.MODEL_COLUMNS
-        ]
-
+        required_columns = self.REQUIRED_COLUMNS + self.MODEL_COLUMNS
+        
         missing_columns = [
             column
             for column in required_columns

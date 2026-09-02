@@ -21,17 +21,9 @@ class AnomalyCatalog:
     )
 
     def __init__(self):
-        self.host = os.getenv(
-            "SPARK_THRIFT_HOST",
-            "spark-master",
-        )
+        self.host = settings.SPARK_THRIFT_HOST
 
-        self.port = int(
-            os.getenv(
-                "SPARK_THRIFT_PORT",
-                "10016",
-            )
-        )
+        self.port = settings.SPARK_THRIFT_PORT
 
     def register_anomaly_table(self) -> None:
         """
