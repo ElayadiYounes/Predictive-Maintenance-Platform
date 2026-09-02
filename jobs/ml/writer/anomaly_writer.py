@@ -38,7 +38,6 @@ class AnomalyWriter:
     ANOMALY_TABLE_PATH = (
        "inspection/fact_inspection_anomaly"
     )
-    MODEL_BASE_PATH = "isolation_forest"
 
     def __init__(self) -> None:
         """Initialise le client MinIO."""
@@ -179,7 +178,6 @@ class AnomalyWriter:
         #construction du chemin
         if model_type == "global" :
             object_key = (
-                f"{self.MODEL_BASE_PATH}/"
                 f"{model_name}/"
                 f"{model_version}/"
                 "global/"
@@ -187,9 +185,9 @@ class AnomalyWriter:
             )
         else:
             object_key = (
-                f"{self.MODEL_BASE_PATH}/"
                 f"{model_name}/"
                 f"{model_version}/"
+                "equipements/"
                 f"{id_equipement}/"
                 "model.joblib"
             )
