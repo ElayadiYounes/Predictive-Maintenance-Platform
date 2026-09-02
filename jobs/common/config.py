@@ -74,6 +74,9 @@ class Settings(BaseSettings):
     GOLD_BUCKET : str
     MODELS_BUCKET : str
 
+    SPARK_THRIFT_HOST : str
+    SPARK_THRIFT_PORT = int
+
 
     # ==========================================
     # DATABASE & CATALOG (POSTGRESQL & HIVE)
