@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     MODELS_BUCKET : str
 
     SPARK_THRIFT_HOST : str
-    SPARK_THRIFT_PORT = int
+    SPARK_THRIFT_PORT : int
 
 
     # ==========================================
