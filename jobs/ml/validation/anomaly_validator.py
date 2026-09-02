@@ -218,6 +218,26 @@ class InspectionAnomalyValidator:
         logger.info(f"Les alerts detectée par les Seuils Métier : {threshold_alerts} ")
         logger.info(f"Les Anomalies confirmée par Isolation Forest ET Seuils Métier : {validated_anomaly} ")
 
+        normal = int(
+            (dataframe["anomaly_status"] == "normal").sum()
+        )
+
+        ml_anomaly_only = int(
+            (dataframe["anomaly_status"] == "ml_anomaly_only").sum()
+        )
+
+        threshold_alert_only = int(
+            (dataframe["anomaly_status"] == "threshold_alert_only").sum()
+        )
+
+        validated_anomaly = int(
+            (dataframe["anomaly_status"] == "validated_anomaly").sum()
+        )
+
+        logger.info(f"Cas normaux : {normal}")
+        logger.info(f"Anomalies ML uniquement : {ml_anomaly_only}")
+        logger.info(f"Alertes métier uniquement : {threshold_alert_only}")
+
         logger.success("Validation des Anomalies Terminée")
 
         return dataframe
