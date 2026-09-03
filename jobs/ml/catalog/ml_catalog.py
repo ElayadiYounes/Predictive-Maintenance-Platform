@@ -82,7 +82,7 @@ class AnomalyCatalog:
                 f"""
                 CREATE EXTERNAL TABLE IF NOT EXISTS {self.DATABASE_NAME}.{self.TABLE_NAME}
                 (
-                    id_inspection BIGINT,
+                    id_inspection INT,
                     id_equipement BIGINT,
                     anomaly_score DOUBLE,
                     anomaly_flag INT,

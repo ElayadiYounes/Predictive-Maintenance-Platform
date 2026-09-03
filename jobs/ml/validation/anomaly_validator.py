@@ -91,7 +91,7 @@ class InspectionAnomalyValidator:
 
         dataframe["threshold_alert"] =(
             dataframe[self.ALERT_COLUMNS].max(axis=1)
-        ).astype(int)
+        ).astype("int32")
 
         return dataframe
 
@@ -112,7 +112,7 @@ class InspectionAnomalyValidator:
             (
                 dataframe["threshold_alert"] == 1
             )
-        ).astype(int)
+        ).astype("int32")
 
         return dataframe
 

@@ -258,7 +258,7 @@ class InspectionIsolationForest:
             results.loc[valid_data.index, "model_type",] = model_type
 
         results["anomaly_score"] = pd.to_numeric(results["anomaly_score"], errors="coerce", )
-        results["anomaly_flag"] = pd.to_numeric(results["anomaly_flag"], errors="coerce", ).astype("Int64")
+        results["anomaly_flag"] = pd.to_numeric(results["anomaly_flag"], errors="coerce", ).astype("Int32")
 
         logger.success("Détection d'anomalies terminée.")
 
