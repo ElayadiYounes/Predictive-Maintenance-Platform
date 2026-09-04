@@ -6,7 +6,7 @@ from jobs.ml.models.isolation_forest import InspectionIsolationForest
 from jobs.ml.validation.anomaly_validator import InspectionAnomalyValidator
 from jobs.ml.writer.anomaly_writer import AnomalyWriter
 from jobs.ml.catalog.ml_catalog import AnomalyCatalog
-from jobs.ml.splitters.temporal_split import TemporalTrainTestSplitter
+#from jobs.ml.splitters.temporal_split import TemporalTrainTestSplitter
 
 def run_isolation_forest():
     """
@@ -39,16 +39,16 @@ def run_isolation_forest():
         logger.info(f"fact_inspection chargée : {len(dataframe):,} lignes.")
 
         logger.info("Lecture de dim_time pour récupérer la date...")
-        dim_time = read_gold_table(table_name="dim_time")
+        #dim_time = read_gold_table(table_name="dim_time")
 
-        dataframe = dataframe.merge(
-            dim_time[["id_time", "date"]],
-            on="id_time",
-            how="left",
-            validate="many_to_one",
-        )
+        #dataframe = dataframe.merge(
+        #    dim_time[["id_time", "date"]],
+        #    on="id_time",
+        #    how="left",
+        #    validate="many_to_one",
+        #)
 
-        logger.info("Date ajoutée à fact_inspection.")
+        #logger.info("Date ajoutée à fact_inspection.")
 
         #feature Engineering
         logger.info("Etape 2/6 : Construction des Features ...")
@@ -62,18 +62,18 @@ def run_isolation_forest():
 
         logger.info("Etape 3/6 : Split temporel Train/Test...")
 
-        splitter = TemporalTrainTestSplitter(
-            test_ratio=0.20,
-            min_train_samples=5,
-            min_test_samples=1,
-        )
+        #splitter = TemporalTrainTestSplitter(
+        #    test_ratio=0.20,
+        #    min_train_samples=5,
+        #    min_test_samples=1,
+        #)
 
-        train_data, test_data = splitter.split(features)
+        #train_data, test_data = splitter.split(features)
 
-        logger.info(
-            f"Train : {len(train_data):,} lignes | "
-            f"Test : {len(test_data):,} lignes."
-        )
+        #logger.info(
+        #    f"Train : {len(train_data):,} lignes | "
+        #    f"Test : {len(test_data):,} lignes."
+        #)
 
 
         #entrainement
@@ -86,20 +86,20 @@ def run_isolation_forest():
         )
 
         logger.info("Entraînement modèle Global ...")
-        isolation_forest.train_global(dataframe=train_data, feature_columns=feature_columns)
+        isolation_forest.train_global(dataframe=features, feature_columns=feature_columns)
 
         logger.info("Entraînement modèle dèdiès ...")
         dedicated_models = (
-            isolation_forest.train_dedicated_models(dataframe=train_data)
+            isolation_forest.train_dedicated_models(dataframe=features)
         )
         logger.info(f"Nombre de modèles dédiés : {len(dedicated_models)}.")
 
         logger.info("Détection des Anomalies ...")
-        ml_results = isolation_forest.predict(dataframe=test_data)
+        ml_results = isolation_forest.predict(dataframe=features)
 
         alert_columns = feature_engineering.CONTEXT_COLUMNS
         dataframe_anomalys = ml_results.merge(
-            test_data[alert_columns],
+            features[alert_columns],
             on=["id_inspection", "id_equipement"],
             how="left",
             validate="one_to_one",

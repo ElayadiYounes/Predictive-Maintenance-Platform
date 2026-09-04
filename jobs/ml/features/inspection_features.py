@@ -89,7 +89,7 @@ class InspectionFeatureEngineering :
     CONTEXT_COLUMNS = [
         "id_inspection",
         "id_equipement",
-        "date",
+        #"date",
         "alert_temperature",
         "alert_vib_axiale",
         "alert_vib_horiz",
