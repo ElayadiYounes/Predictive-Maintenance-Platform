@@ -12,11 +12,6 @@ class InspectionFeatureEngineering :
         - des agrégations avant/arrière ;
         - des seuils de danger propres à chaque équipement.
 
-    Cette classe ne produit pas :
-        - anomaly_score ;
-        - anomaly_flag ;
-        - prédiction de panne ;
-        - RUL.
     """
     # Toutes les colonnes qui doivent obligatoirement être présentes dans la table Gold
     REQUIRED_COLUMNS = [
