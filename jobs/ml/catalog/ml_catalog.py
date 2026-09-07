@@ -152,3 +152,148 @@ class AnomalyCatalog:
             logger.info("=" * 70)
             logger.success("HIVE CATALOG REGISTRATION TERMINÉ.")
             logger.info("=" * 70)
+
+
+class RULCatalog:
+    """
+    Gestion du catalogue Hive pour les tables ML.
+
+    Le catalogue Hive pointe vers les fichiers Parquet
+    déjà présents dans MinIO Gold.
+    """
+
+    DATABASE_NAME = "gold"
+    TABLE_NAME = "fact_inspection_rul"
+
+    TABLE_LOCATION = (
+        "s3a://gold/inspection/fact_inspection_rul/"
+    )
+
+    def __init__(self):
+        self.host = settings.SPARK_THRIFT_HOST
+
+        self.port = settings.SPARK_THRIFT_PORT
+
+    def register_rul_table(self) -> None:
+        """
+        Enregistre gold.fact_inspection_rul
+        dans le catalogue Hive.
+
+        La table pointe vers les fichiers Parquet
+        déjà écrits dans MinIO Gold.
+        """
+
+        logger.info("=" * 70)
+        logger.info("HIVE CATALOG REGISTRATION START")
+        logger.info("=" * 70)
+
+        connection = None
+        cursor = None
+
+        try:
+            logger.info(
+                f"Connexion au Spark Thrift Server : "
+                f"{self.host}:{self.port}"
+            )
+
+            connection = hive.Connection(
+                host=self.host,
+                port=self.port,
+                database="default",
+            )
+
+            cursor = connection.cursor()
+
+            # --------------------------------------------------
+            # 1. Création de la base Gold
+            # --------------------------------------------------
+
+            logger.info(
+                f"Vérification de la base : {self.DATABASE_NAME}"
+            )
+
+            cursor.execute(
+                f"CREATE DATABASE IF NOT EXISTS {self.DATABASE_NAME}"
+            )
+
+            # --------------------------------------------------
+            # 2. Création de la table externe
+            # --------------------------------------------------
+
+            logger.info(
+                f"Enregistrement de la table : "
+                f"{self.DATABASE_NAME}.{self.TABLE_NAME}"
+            )
+
+
+            cursor.execute(
+                f"""
+                CREATE EXTERNAL TABLE {self.DATABASE_NAME}.{self.TABLE_NAME}
+                (
+                    id_inspection INT,
+                    id_equipement BIGINT,
+                    target_rul INT,
+                    predicted_rul INT,
+                    model_type STRING,
+                    model_version STRING,
+                    prediction_date TIMESTAMP,
+                    date STRING,
+                    threshold_alert INT,
+                    rul_error_raw INT,
+                    rul_error_absolute INT,
+                    rul_status STRING
+                )
+                STORED AS PARQUET
+                LOCATION '{self.TABLE_LOCATION}'
+                """
+            )
+
+            # --------------------------------------------------
+            # 3. Vérification
+            # --------------------------------------------------
+
+            logger.info("Vérification de la table enregistrée...")
+
+            cursor.execute(
+                f"DESCRIBE {self.DATABASE_NAME}.{self.TABLE_NAME}"
+            )
+
+            columns = cursor.fetchall()
+
+            if not columns:
+                raise RuntimeError(
+                    "La table Hive n'a pas pu être vérifiée."
+                )
+
+            logger.success(
+                f"Table enregistrée avec succès : "
+                f"{self.DATABASE_NAME}.{self.TABLE_NAME}"
+            )
+
+            logger.info(
+                f"LOCATION : {self.TABLE_LOCATION}"
+            )
+
+        except Exception:
+            logger.exception(
+                "Erreur lors de l'enregistrement de la table dans Hive."
+            )
+            raise
+
+        finally:
+            # CORRECTION : Gestion plus robuste des fermetures en cas d'échec
+            if cursor is not None:
+                try:
+                    cursor.close()
+                except Exception:
+                    pass
+
+            if connection is not None:
+                try:
+                    connection.close()
+                except Exception:
+                    pass
+
+            logger.info("=" * 70)
+            logger.success("HIVE CATALOG REGISTRATION TERMINÉ.")
+            logger.info("=" * 70)
