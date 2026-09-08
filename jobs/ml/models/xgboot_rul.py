@@ -154,10 +154,10 @@ class InspectionXGBoostRUL:
         logger.info(f"Génération des prédictions RUL sur {len(dataframe):,} inspections...")
 
         result = dataframe.copy()
-        X_pred = result[self.feature_columns]
+        x_pred = result[self.feature_columns]
 
         # Calcul des prédictions continues (float)
-        raw_predictions = self.global_model.predict(X_pred)
+        raw_predictions = self.global_model.predict(x_pred)
 
         # Post-traitements métiers essentiels :
         # 1. Empêcher les valeurs négatives absurde (clip à 0 jour minimum)

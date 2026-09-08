@@ -62,9 +62,6 @@ class RULWriter:
         """Prépare le DataFrame final destiné à la table fact_inspection_rul."""
         result = dataframe.copy()
 
-        if "model_name" not in result.columns:
-            result["model_name"] = "xgboost_rul"
-
         if "model_version" not in result.columns:
             result["model_version"] = "v1"
 
