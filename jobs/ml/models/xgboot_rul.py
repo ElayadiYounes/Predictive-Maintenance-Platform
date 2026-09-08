@@ -112,18 +112,18 @@ class InspectionXGBoostRUL:
         logger.info("Entraînement du modèle XGBoost RUL global...")
 
         # Préparation des matrices
-        X_train = dataframe[feature_columns].copy()
+        x_train = dataframe[feature_columns].copy()
         y_train = dataframe["target_rul"]
 
         model = self._create_model()
-        model.fit(X_train, y_train)
+        model.fit(x_train, y_train)
 
         self.global_model = model
         self.feature_columns = feature_columns
 
         logger.success(
             "Modèle global XGBoost RUL entraîné avec succès : "
-            f"{len(X_train):,} observations, "
+            f"{len(x_train):,} observations, "
             f"{len(feature_columns)} features actives."
         )
         return model
