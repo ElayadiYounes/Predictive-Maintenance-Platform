@@ -97,6 +97,9 @@ class RULWriter:
         if result["id_equipement"].isna().any():
             raise ValueError("Certains id_equipement sont invalides (NaN).")
 
+        if "date" in result.columns:
+            # .dt.strftime("%Y-%m-%d") convertit le datetime en texte propre
+            result["date"] = pd.to_datetime(result["date"]).dt.strftime("%Y-%m-%d").astype(str)
         # Forçage des types entiers pour la compatibilité Parquet / Spark SQL
         result["id_inspection"] = result["id_inspection"].astype("int32")
         result["predicted_rul"] = result["predicted_rul"].astype("int32")

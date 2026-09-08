@@ -228,7 +228,7 @@ class RULCatalog:
 
             cursor.execute(
                 f"""
-                CREATE EXTERNAL TABLE {self.DATABASE_NAME}.{self.TABLE_NAME}
+                CREATE EXTERNAL TABLE IF NOT EXISTS {self.DATABASE_NAME}.{self.TABLE_NAME}
                 (
                     id_inspection INT,
                     id_equipement BIGINT,

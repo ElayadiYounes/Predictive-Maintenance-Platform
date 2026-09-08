@@ -64,7 +64,6 @@ def run_xgboost_rul():
             how="left"
         )
         logger.info(f"Données brutes consolidées : {len(dataframe_complet):,} lignes.")
-        logger.info(f"les colonnne ce sont : {dataframe_complet.columns}")
 
         # ============================================================
         # ÉTAPE 2/6 : RUL Feature Engineering
