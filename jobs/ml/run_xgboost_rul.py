@@ -41,14 +41,21 @@ def run_xgboost_rul():
 
         logger.info("Chaînage des jointures pour consolider l'axe chronologique réel...")
 
+        cles_communes = [
+            "id_inspection",
+            "id_equipement",
+            "alert_temperature",
+            "alert_vib_axiale",
+            "alert_vib_horiz",
+            "alert_vib_vert"
+        ]
+
         # 1ère jointure : Croisement des résultats de l'IA (scores) avec les mesures physiques brutes
         df_merged = df_anomalies.merge(
             df_fact,
-            on="id_inspection",
+            on=cles_communes,
             how="inner"
         )
-        if "id_equipement" in df_merged.columns:
-            df_merged = df_merged.drop(columns=["id_equipement"])
 
         # 2ème jointure : Récupération de la vraie date physique d'inspection (dim_time)
         dataframe_complet = df_merged.merge(
@@ -57,6 +64,7 @@ def run_xgboost_rul():
             how="left"
         )
         logger.info(f"Données brutes consolidées : {len(dataframe_complet):,} lignes.")
+        logger.info(f"les colonnne ce sont : {dataframe_complet.columns}")
 
         # ============================================================
         # ÉTAPE 2/6 : RUL Feature Engineering
