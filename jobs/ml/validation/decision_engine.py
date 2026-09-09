@@ -31,7 +31,7 @@ class MaintenanceDecisionEngine:
 
 
     @staticmethod
-    def _apply_rules_row(self, row: pd.Series) -> dict:
+    def _apply_rules_row(row: pd.Series) -> dict:
         """
         Applique la matrice de règles métiers complétée sur 100% des cas.
         """

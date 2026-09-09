@@ -43,7 +43,8 @@ class RULFeatureEngineering(InspectionFeatureEngineering):
             "id_inspection",
             "id_equipement",
             "date",
-            "threshold_alert"
+            "threshold_alert",
+            "anomaly_status"
         ]
 
     def _compute_target_rul(self, dataframe: pd.DataFrame) -> pd.DataFrame:

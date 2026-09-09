@@ -10,6 +10,7 @@ from jobs.ml.models.xgboot_rul import InspectionXGBoostRUL
 from jobs.ml.validation.rul_validator import RULResultsValidator
 from jobs.ml.writer.rul_writer import RULWriter
 from jobs.ml.catalog.ml_catalog import RULCatalog
+from jobs.ml.validation.decision_engine import MaintenanceDecisionEngine
 
 
 def run_xgboost_rul():
@@ -137,6 +138,10 @@ def run_xgboost_rul():
 
         # Enrichissement final des données de production avec les indicateurs d'écarts
         production_results = results_validator.validate(dataframe=production_results)
+
+        #enriche notre table par ces deux variables de decision
+        engine = MaintenanceDecisionEngine()
+        production_results_prescriptive = engine.process_decisions(production_results)
 
         # ============================================================
         # ÉTAPE 6/6 : Écriture S3 (Gold & Models) & Enregistrement Hive
