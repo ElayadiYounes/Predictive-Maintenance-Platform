@@ -241,7 +241,9 @@ class RULCatalog:
                     threshold_alert INT,
                     rul_error_raw INT,
                     rul_error_absolute INT,
-                    rul_status STRING
+                    rul_status STRING,
+                    decision_priority STRING,
+                    prescribed_action STRING
                 )
                 STORED AS PARQUET
                 LOCATION '{self.TABLE_LOCATION}'
