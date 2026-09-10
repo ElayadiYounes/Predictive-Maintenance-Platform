@@ -243,7 +243,8 @@ class RULCatalog:
                     rul_error_absolute INT,
                     rul_status STRING,
                     decision_priority STRING,
-                    prescribed_action STRING
+                    prescribed_action STRING,
+                    alert_sent INT
                 )
                 STORED AS PARQUET
                 LOCATION '{self.TABLE_LOCATION}'
