@@ -103,7 +103,14 @@ class Settings(BaseSettings):
             f":{self.HIVE_METASTORE_PORT}"
         )
 
-
+    #configuration de notification (alert)
+    SMTP_HOST : str
+    SMTP_PORT : int
+    SMTP_USERNAME : str
+    MAINTENANCE_TEAM_EMAIL : str
+    SMTP_PASSWORD : SecretStr
+    SMTP_FROM : str
+    SMTP_TLS : bool
 
 
 #Instanciation du Singleton de configuration
