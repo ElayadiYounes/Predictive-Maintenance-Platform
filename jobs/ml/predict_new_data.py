@@ -191,6 +191,8 @@ class IncrementalInferencePipeline:
             )
             existing_buffer.seek(0)
             df_history = pd.read_parquet(existing_buffer)
+            #assure que le delta contient des 0 pour qu'on trait ces ligne et envoi les alert
+            df_new_data["alert_sent"] = 0
             df_consolidated = pd.concat([df_history, df_new_data], ignore_index=True)
         except Exception:
             logger.warning(f"Fichier historique {object_key} absent. Initialisation de la table.")

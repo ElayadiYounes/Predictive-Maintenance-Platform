@@ -70,6 +70,12 @@ class RULWriter:
         if "prediction_date" not in result.columns:
             result["prediction_date"] = datetime.now(timezone.utc)
 
+        # LOGIQUE DE SÉCURITÉ ANTI-SPAM HISTORIQUE
+        if "alert_sent" not in result.columns:
+            result["alert_sent"] = 1
+        else:
+            result["alert_sent"] = result["alert_sent"].fillna(0).astype("int32")
+
         # Construction de la liste des colonnes de sortie
         output_columns = list(self.REQUIRED_COLUMNS) + ["model_version", "prediction_date"]
 
