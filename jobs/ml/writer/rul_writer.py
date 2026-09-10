@@ -31,6 +31,8 @@ class RULWriter:
         "rul_error_raw",
         "rul_error_absolute",
         "rul_status",
+        "decision_priority",
+        "prescribed_action"
     ]
 
     RUL_TABLE_PATH = "inspection/fact_inspection_rul"

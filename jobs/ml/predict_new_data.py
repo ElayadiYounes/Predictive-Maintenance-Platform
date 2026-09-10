@@ -121,7 +121,9 @@ class IncrementalInferencePipeline:
 
         rul_buffer = BytesIO()
         self.minio_client.s3_client.download_fileobj(
-            Bucket=settings.MODELS_BUCKET, Key="xgboost_rul/v1/global/model.joblib", Fileobj=rul_buffer
+            Bucket=settings.MODELS_BUCKET,
+            Key="xgboost_rul/v1/global/model.joblib",
+            Fileobj=rul_buffer
         )
         rul_buffer.seek(0)
         inspection_xgb.global_model = joblib.load(rul_buffer)

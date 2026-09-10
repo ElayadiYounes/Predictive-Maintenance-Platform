@@ -151,7 +151,7 @@ def run_xgboost_rul():
 
         # 1. Écriture de la table Gold fact_inspection_rul
         logger.info("Sauvegarde de la table fact_inspection_rul dans le bucket Gold...")
-        rul_writer.write_rul_results(dataframe=production_results)
+        rul_writer.write_rul_results(dataframe=production_results_prescriptive)
 
         # 2. Déclaration au catalogue Hive via Spark Thrift Server
         logger.info("Enregistrement de la table RUL dans le catalogue Hive...")
