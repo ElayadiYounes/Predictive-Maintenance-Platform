@@ -73,6 +73,7 @@ class RULWriter:
         # LOGIQUE DE SÉCURITÉ ANTI-SPAM HISTORIQUE
         if "alert_sent" not in result.columns:
             result["alert_sent"] = 1
+            result["alert_sent"] = result["alert_sent"].astype("Int32")
         else:
             result["alert_sent"] = result["alert_sent"].fillna(0).astype("int32")
 
