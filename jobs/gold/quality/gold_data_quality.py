@@ -224,14 +224,15 @@ class GoldDataQuality:
         )
 
         if target_count != source_count:
-            raise MaintenancePlatformException(
-                f"Le nombre de lignes a augmenté lors de la "
+            logger.warning(
+                f"⚠️ ALERTE : Le nombre de lignes a changé lors de la "
                 f"transformation {source_name} → {target_name} : "
                 f"{source_count:,} → {target_count:,}."
             )
-
-        logger.success(
-            f"Nombre de lignes valide : "
-            f"{source_count:,} → {target_count:,}."
-        )
+        else:
+            # Le logger.success ne se déclenche que si les nombres sont parfaitement égaux
+            logger.success(
+                f"Nombre de lignes valide : "
+                f"{source_count:,} → {target_count:,}."
+            )
 

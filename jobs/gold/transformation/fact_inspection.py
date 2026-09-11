@@ -84,6 +84,8 @@ La table intègre :
         F.greatest(F.col("av_v"), F.col("ar_v")) / F.col("seuil_danger_vib_vert")
     )
 
+    fact = fact.dropna(subset=["ratio_temp","ratio_vib_axiale","ratio_vib_horiz","ratio_vib_vert"])
+
     fact = fact.withColumn(
         "alert_temperature",
         F.when(
