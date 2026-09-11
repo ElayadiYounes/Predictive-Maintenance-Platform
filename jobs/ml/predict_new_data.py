@@ -41,21 +41,73 @@ class IncrementalInferencePipeline:
     @staticmethod
     def detect_new_data() -> pd.DataFrame:
         """
-        Étape 1 : Isole le Delta en filtrant fact_inspection face aux inspections
-        déjà calculées dans la table finale fact_inspection_rul.
-        """
-        logger.info("Étape 1/4 : Analyse de l'historique pour détecter le Delta...")
-        df_fact = read_gold_table(table_name="fact_inspection")
+           Détecte uniquement les nouvelles données (inspections absentes
+           de la table fact_inspection_anomaly) à traiter.
+
+           Returns
+           -------
+           pd.DataFrame
+               - df_new_inspections :
+                   Inspections absentes de fact_inspection_anomaly.
+                   Elles doivent passer par l'Isolation Forest.
+           """
+
+        logger.info(
+            "Étape 1/4 : Analyse de l'historique "
+            "pour détecter le Delta (Nouvelles Inspections)..."
+        )
+
+        # ==============================================================
+        # 1. Lecture de la source
+        # ==============================================================
+
+        df_fact = read_gold_table(
+            table_name="fact_inspection"
+        )
+
+        # Normalisation des IDs
+        df_fact["id_inspection"] = (
+            df_fact["id_inspection"]
+            .astype(int)
+        )
+
+        # ==============================================================
+        # 2. Lecture de fact_inspection_anomaly
+        # ==============================================================
 
         try:
-            df_existing_rul = read_gold_table(table_name="fact_inspection_rul")
-            processed_ids = df_existing_rul["id_inspection"].unique()
-            df_delta = df_fact[~df_fact["id_inspection"].isin(processed_ids)].copy()
-        except Exception:
-            logger.warning("Table de destination absente dans MinIO Gold. Traitement complet (Initialisation).")
-            df_delta = df_fact.copy()
+            df_existing_anomaly = read_gold_table(
+                table_name="fact_inspection_anomaly"
+            )
 
-        logger.info(f"Analyse terminée : {len(df_delta):,} nouvelle(s) ligne(s) à traiter.")
+            df_existing_anomaly["id_inspection"] = (
+                df_existing_anomaly["id_inspection"]
+                .astype(int)
+            )
+
+            anomaly_ids = set(
+                df_existing_anomaly["id_inspection"]
+            )
+
+        except Exception:
+            logger.warning(
+                "Table fact_inspection_anomaly absente. "
+                "Toutes les inspections seront considérées "
+                "comme nouvelles pour la détection d'anomalies."
+            )
+
+            anomaly_ids = set()
+
+        # ==============================================================
+        # 3. Nouvelles inspections pour la détection d'anomalies
+        # ==============================================================
+
+        df_delta = df_fact[
+            ~df_fact["id_inspection"].isin(anomaly_ids)
+        ].copy()
+
+        logger.success(f"Parmi {len(df_fact)} lignes de source, on a détecté {len(df_delta)} nouveaux lignes")
+
         return df_delta
 
     def execute_inference_chain(self, df_delta: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
