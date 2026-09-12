@@ -168,42 +168,102 @@ class IncrementalInferencePipeline:
         # ==================================================================
         # B. PIPELINE 2 : Prédiction de la RUL (XGBoost Regressor)
         # ==================================================================
-        logger.info("Étape 3 : Chargement et exécution de votre modèle XGBoost RUL...")
+        logger.info(
+            "Étape 3 : Chargement et exécution du modèle XGBoost RUL..."
+        )
+
         inspection_xgb = InspectionXGBoostRUL()
 
+        # --------------------------------------------------------------
+        # Chargement du modèle global
+        # --------------------------------------------------------------
+
         rul_buffer = BytesIO()
+
         self.minio_client.s3_client.download_fileobj(
             Bucket=settings.MODELS_BUCKET,
             Key="xgboost_rul/v1/global/model.joblib",
-            Fileobj=rul_buffer
+            Fileobj=rul_buffer,
         )
-        rul_buffer.seek(0)
-        inspection_xgb.global_model = joblib.load(rul_buffer)
 
-        feature_columns_xgb = ["anomaly_score"] + feature_columns_ml
+        rul_buffer.seek(0)
+
+        inspection_xgb.global_model = joblib.load(
+            rul_buffer
+        )
+
+        feature_columns_xgb = [
+            "anomaly_score",
+            *feature_columns_ml,
+        ]
+
         inspection_xgb.feature_columns = feature_columns_xgb
 
-        # Récupération de l'axe temporel depuis dim_time pour le Feature Engineering de RUL
-        df_time = read_gold_table(table_name="dim_time")
-        df_rul_input = df_anomaly_final.merge(df_time[["id_time", "date"]], on="id_time", how="left")
+        # --------------------------------------------------------------
+        # Préparation des données d'inférence
+        # Aucun target_rul n'est calculé ici.
+        # Aucun RULFeatureEngineering n'est utilisé.
+        # --------------------------------------------------------------
 
-        fe_rul = RULFeatureEngineering(max_rul_days=30)
-        df_features_rul = fe_rul.build_feature_engineering(df_rul_input)
+        missing_rul_features = [
+            column
+            for column in feature_columns_xgb
+            if column not in df_anomaly_final.columns
+        ]
 
-        # Appel NATIF de votre méthode predict() XGBoost (Post-traitements clip/round/types inclus)
-        df_rul_predictions = inspection_xgb.predict(dataframe=df_features_rul)
+        if missing_rul_features:
+            raise ValueError(
+                "Features nécessaires à la prédiction XGBoost "
+                f"absentes de df_anomaly_final : {missing_rul_features}"
+            )
 
-        # Validation descriptive (Analyse des écarts de suivi)
-        df_rul_validated = self.rul_validator.validate(df_rul_predictions)
+        # Le modèle a uniquement besoin des features X.
+        df_features_rul = df_anomaly_final[
+            [
+                "id_inspection",
+                "id_equipement",
+                *feature_columns_xgb,
+            ]
+        ].copy()
+
+        # --------------------------------------------------------------
+        # Prédiction
+        # --------------------------------------------------------------
+
+        df_rul_predictions = inspection_xgb.predict(
+            dataframe=df_features_rul
+        )
+
+        logger.success(
+            "Prédiction XGBoost RUL terminée : "
+            f"{len(df_rul_predictions):,} inspection(s)."
+        )
+
 
         # ==================================================================
         # C. PIPELINE 3 : Application du Moteur de Décision Prescriptif
         # ==================================================================
-        df_final_production_rul = self.decision_engine.process_decisions(df_rul_validated)
+
+        contexte_cols = ["id_inspection", "id_equipement", "anomaly_status", "threshold_alert"]
+
+        contexte_cols_existantes = [c for c in contexte_cols if c in df_anomaly_final.columns]
+
+        df_rul_predictions_with_context = df_rul_predictions.merge(
+            df_anomaly_final[contexte_cols_existantes],
+            on=["id_inspection", "id_equipement"],
+            how="inner"
+        )
+
+        df_final_production_rul = self.decision_engine.process_decisions(
+            df_rul_predictions_with_context
+        )
+
 
         return df_anomaly_final, df_final_production_rul
 
-    def save_incremental_results(self, df_anomaly: pd.DataFrame, df_rul: pd.DataFrame) -> None:
+
+
+    def save_incremental_results(self, df_anomaly: pd.DataFrame, df_rul: pd.DataFrame, df_delta: pd.DataFrame) -> None:
         """
         Étape 4 : Insère de manière incrémentale (Append Parquet) les DataFrames finaux
         dans le Data Lake Gold et réactive le catalogue Hive.
@@ -220,6 +280,23 @@ class IncrementalInferencePipeline:
             object_key="inspection/fact_inspection_anomaly/fact_inspection_anomaly.parquet",
             writer_type="anomaly"
         )
+
+        if "date" not in df_rul.columns:
+            logger.info("Récupération de la colonne 'date' depuis dim_time via df_delta...")
+
+            # 1. On récupère la table de correspondance id_time -> date
+            df_time = read_gold_table(table_name="dim_time")
+
+            # 2. On extrait les couples (id_inspection, id_time) depuis le flux source
+            df_delta_time = df_delta[["id_inspection", "id_time"]].drop_duplicates()
+
+            # 3. On associe l'id_inspection à sa date réelle
+            df_inspection_date = df_delta_time.merge(
+                df_time[["id_time", "date"]], on="id_time", how="left"
+            )[["id_inspection", "date"]]
+
+            # 4. On injecte la date dans le livrable RUL
+            df_rul = df_rul.merge(df_inspection_date, on="id_inspection", how="left")
 
         # 2. Écriture incrémentale RUL (avec format texte strict sur la date)
         df_rul["date"] = pd.to_datetime(df_rul["date"]).dt.strftime("%Y-%m-%d").astype(str)
@@ -244,7 +321,9 @@ class IncrementalInferencePipeline:
             existing_buffer.seek(0)
             df_history = pd.read_parquet(existing_buffer)
             #assure que le delta contient des 0 pour qu'on trait ces ligne et envoi les alert
-            df_new_data["alert_sent"] = 0
+            if writer_type == "rul":
+                df_new_data["alert_sent"] = 0
+
             df_consolidated = pd.concat([df_history, df_new_data], ignore_index=True)
         except Exception:
             logger.warning(f"Fichier historique {object_key} absent. Initialisation de la table.")
@@ -254,10 +333,24 @@ class IncrementalInferencePipeline:
         df_consolidated["id_inspection"] = df_consolidated["id_inspection"].astype("int32")
         df_consolidated["id_equipement"] = df_consolidated["id_equipement"].astype("int64")
 
+        if "target_rul" not in df_consolidated.columns:
+            df_consolidated["target_rul"] = -1
+
+        if "rul_error_raw" not in df_consolidated.columns:
+            df_consolidated["rul_error_raw"] = -1
+
+        if "rul_error_absolute" not in df_consolidated.columns:
+            df_consolidated["rul_error_absolute"] = -1
+
         if "predicted_rul" in df_consolidated.columns:
             df_consolidated["predicted_rul"] = df_consolidated["predicted_rul"].astype("int32")
-        if "target_rul" in df_consolidated.columns:
-            df_consolidated["target_rul"] = df_consolidated["target_rul"].astype("int32")
+
+        if "alert_sent" in df_consolidated.columns:
+            df_consolidated["alert_sent"] = df_consolidated["alert_sent"].fillna(0).astype("int32")
+
+        df_consolidated["target_rul"] = df_consolidated["target_rul"].fillna(-1).astype("int32")
+        df_consolidated["rul_error_raw"] = df_consolidated["rul_error_raw"].fillna(-1).astype("int32")
+        df_consolidated["rul_error_absolute"] = df_consolidated["rul_error_absolute"].fillna(-1).astype("int32")
 
         # Réécriture Parquet propre
         output_buffer = BytesIO()
@@ -289,7 +382,7 @@ def main():
         df_anomaly_final, df_rul_final = pipeline.execute_inference_chain(df_delta)
 
         #sauvegarder et catalogage hive sql
-        pipeline.save_incremental_results(df_anomaly_final, df_rul_final)
+        pipeline.save_incremental_results(df_anomaly_final, df_rul_final,df_delta)
         logger.success("PIPELINE D'INFERENCE INCRÉMENTALE DE PRODUCTION TERMINÉ AVEC SUCCÈS !")
     except Exception:
         logger.exception("Échec critique lors de l'exécution de l'inférence incrémentale de production.")
