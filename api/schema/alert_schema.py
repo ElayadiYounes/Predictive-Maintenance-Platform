@@ -10,6 +10,8 @@ class MaintenanceAlertResponse(BaseModel):
     """
     id_inspection: int = Field(..., description="Identifiant unique de l'inspection")
     id_equipement: int = Field(..., description="Identifiant unique de l'équipement")
+    instal: str = Field(..., description="Nom ou identifiant de l'installation")
+    zone: str = Field(..., description="zone d'installation")
     date: str = Field(..., description="Vraie date physique de l'inspection (YYYY-MM-DD)")
     predicted_rul: int = Field(..., description="Nombre de jours restants calculé par XGBoost")
     anomaly_status: str = Field(..., description="Statut de dérive calculé par l'Isolation Forest")

@@ -14,7 +14,9 @@ class AlertService:
     et mise à jour du statut d'archivage dans le Data Lake Gold.
     """
 
-    OBJECT_PATH = "inspection/fact_inspection_rul/fact_inspection_rul.parquet"
+    FACT_RUL_PATH = "inspection/fact_inspection_rul/fact_inspection_rul.parquet"
+    DIM_EQUIPEMENT_PATH = "inspection/dim_equipement/dim_equipement.parquet"
+
 
     def __init__(self) -> None:
         self.minio_client = MinioStorageClient()
@@ -30,7 +32,7 @@ class AlertService:
             #  Utilisation de votre fonction native download_dataframe
             df_rul = self.minio_client.download_dataframe(
                 bucket_name=settings.GOLD_BUCKET,
-                object_path=self.OBJECT_PATH
+                object_path=self.FACT_RUL_PATH
             )
 
             if df_rul.empty:
@@ -41,6 +43,29 @@ class AlertService:
                 (df_rul["decision_priority"].isin(["CRITIQUE", "HAUTE", "MOYENNE", "FAIBLE"])) &
                 (df_rul["alert_sent"] == 0)
                 ].copy()
+
+            if df_alerts.empty:
+                return []
+
+            # recuperer la dimension equipement
+            df_equipement = self.minio_client.download_dataframe(
+                bucket_name=settings.GOLD_BUCKET,
+                object_path=self.DIM_EQUIPEMENT_PATH
+            )
+            df_equipement = df_equipement[
+                [
+                    "id_equipement",
+                    "zone",
+                    "instal",
+                ]
+            ].drop_duplicates(
+                subset=["id_equipement"]
+            )
+            df_alerts = df_alerts.merge(
+                df_equipement,
+                on="id_equipement",
+                how="left"
+            )
 
             logger.info(f"Service API : {len(df_alerts)} nouvelle(s) alerte(s) détectée(s).")
 
