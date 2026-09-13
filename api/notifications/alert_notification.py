@@ -66,29 +66,78 @@ class NotificationService:
         title = f"[{alert.decision_priority}] Alerte Machine - Équipement {alert.id_equipement}"
 
         body_text = (
-            f"⚠️ DÉTECTION ANOMALIE ML ⚠️\n"
+            "⚠️ ALERTE DE MAINTENANCE ⚠️\n"
             f"• Équipement : {alert.id_equipement}\n"
-            f"• Statut IA : {alert.anomaly_status}\n"
-            f"• Temps restant estimé (RUL) : {alert.predicted_rul} jours\n"
-            f"• Action prescrite : {alert.prescribed_action}\n"
-            f"• Date d'inspection : {alert.date}"
+            f"• Installation : {alert.instal}\n"
+            f"• Zone : {alert.zone}\n"
+            f"• Date d'inspection : {alert.date}\n" 
+            f"• Statut IA : {alert.anomaly_status}\n" 
+            f"• RUL estimé : {alert.predicted_rul} jour(s)\n" 
+            f"• Priorité : {alert.decision_priority}\n" 
+            f"• Action prescrite : {alert.prescribed_action}\n" 
+            f"• Générée le : {alert.prediction_date.isoformat()}"
+        )
+        #gesion des couleurs :
+        priority_colors = {
+            "CRITIQUE": "#d9534f",
+            "HAUTE": "#f0ad4e",
+            "MOYENNE": "#f7c948",
+            "FAIBLE": "#5bc0de",
+        }
+        priority_color = priority_colors.get(
+            alert.decision_priority,
+            "#777777",
         )
 
-        body_html = f"""
-        <html>
-            <body style="font-family: Arial, sans-serif; color: #333;">
-                <h2 style="color: {'#d9534f' if alert.decision_priority == 'CRITIQUE' else '#f0ad4e'};">
-                    {title}
-                </h2>
-                <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
-                    <tr style="background-color: #f2f2f2;"><td style="padding: 8px; font-weight: bold;">Statut de dérive (IA)</td><td style="padding: 8px;">{alert.anomaly_status}</td></tr>
-                    <tr><td style="padding: 8px; font-weight: bold;">Temps restant (RUL)</td><td style="padding: 8px; font-weight: bold; color: red;">{alert.predicted_rul} jours</td></tr>
-                    <tr style="background-color: #f2f2f2;"><td style="padding: 8px; font-weight: bold;">Consigne prescrite</td><td style="padding: 8px; font-style: italic;">{alert.prescribed_action}</td></tr>
-                    <tr><td style="padding: 8px; font-weight: bold;">Date du contrôle</td><td style="padding: 8px;">{alert.date}</td></tr>
-                </table>
-                <p style="margin-top: 20px; font-size: 11px; color: #777;">Alerte générée automatiquement par la plateforme de maintenance prédictive.</p>
-            </body>
-        </html>
+        body_html = f""" 
+              <html> 
+                    <body style=" font-family: Arial, sans-serif; color: #333; line-height: 1.5; " > 
+                       <h2 style="color: {priority_color};"> {title} </h2> 
+                       <table style=" border-collapse: collapse; width: 100%; max-width: 650px; " >
+                         <tr> 
+                            <td style="padding: 8px; font-weight: bold;"> Équipement </td>
+                            <td style="padding: 8px;"> {alert.id_equipement} </td> 
+                         </tr> 
+                         <tr style="background-color: #f2f2f2;">
+                           <td style="padding: 8px; font-weight: bold;"> Installation </td> 
+                           <td style="padding: 8px;"> {alert.instal} </td> 
+                        </tr> 
+                        <tr> 
+                           <td style="padding: 8px; font-weight: bold;"> Zone </td>
+                           <td style="padding: 8px;"> {alert.zone} </td> 
+                       </tr> 
+                       <tr style="background-color: #f2f2f2;"> 
+                          <td style="padding: 8px; font-weight: bold;"> Date d'inspection </td>
+                          <td style="padding: 8px;"> {alert.date} </td> 
+                      </tr> 
+                      <tr> 
+                          <td style="padding: 8px; font-weight: bold;"> Statut IA </td>
+                          <td style="padding: 8px;"> {alert.anomaly_status} </td> 
+                      </tr> 
+                      <tr style="background-color: #f2f2f2;">
+                          <td style="padding: 8px; font-weight: bold;"> RUL estimé </td>
+                          <td style=" padding: 8px; font-weight: bold; color: {priority_color}; " > {alert.predicted_rul} jour(s) </td>
+                      </tr>
+                      <tr> 
+                          <td style="padding: 8px; font-weight: bold;"> Priorité </td>
+                          <td style=" padding: 8px; font-weight: bold; color: {priority_color}; " > {alert.decision_priority} </td>
+                      </tr> 
+                      <tr style="background-color: #f2f2f2;">
+                          <td style="padding: 8px; font-weight: bold;"> Action prescrite </td>
+                          <td style=" padding: 8px; font-style: italic; " > {alert.prescribed_action} </td>
+                      </tr> 
+                      <tr> 
+                          <td style="padding: 8px; font-weight: bold;"> ID inspection </td>
+                          <td style="padding: 8px;"> {alert.id_inspection} </td> 
+                      </tr> 
+                      <tr style="background-color: #f2f2f2;">
+                          <td style="padding: 8px; font-weight: bold;"> Génération de la prédiction </td>
+                          <td style="padding: 8px;"> {alert.prediction_date} </td> 
+                      </tr> 
+                   </table> 
+                   <p style=" margin-top: 20px; font-size: 11px; color: #777; " > Alerte générée automatiquement par la plateforme de maintenance prédictive et prescriptive. </p> 
+                </body> 
+        </html> 
         """
 
         logger.info(f"Notification : Routage asynchrone de l'alerte de priorité [{alert.decision_priority}]...")
