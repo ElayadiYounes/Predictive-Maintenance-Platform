@@ -15,7 +15,7 @@ class AlertService:
     """
 
     FACT_RUL_PATH = "inspection/fact_inspection_rul/fact_inspection_rul.parquet"
-    DIM_EQUIPEMENT_PATH = "inspection/dim_equipement/dim_equipement.parquet"
+    DIM_EQUIPEMENT_PATH = "inspection/dim_equipement"
 
 
     def __init__(self) -> None:
@@ -48,9 +48,9 @@ class AlertService:
                 return []
 
             # recuperer la dimension equipement
-            df_equipement = self.minio_client.download_dataframe(
+            df_equipement = self.minio_client.read_parquet_prefix(
                 bucket_name=settings.GOLD_BUCKET,
-                object_path=self.DIM_EQUIPEMENT_PATH
+                prefix=self.DIM_EQUIPEMENT_PATH
             )
             df_equipement = df_equipement[
                 [
@@ -94,7 +94,7 @@ class AlertService:
             #  Téléchargement natif de l'historique complet
             df_history = self.minio_client.download_dataframe(
                 bucket_name=settings.GOLD_BUCKET,
-                object_path=self.OBJECT_PATH
+                object_path=self.FACT_RUL_PATH
             )
 
             # Mise à jour de la colonne pour les IDs spécifiés
@@ -115,7 +115,7 @@ class AlertService:
                 self.minio_client.s3_client.upload_fileobj(
                     Fileobj=buffer_write,
                     Bucket=settings.GOLD_BUCKET,
-                    Key=self.OBJECT_PATH  # "inspection/fact_inspection_rul/fact_inspection_rul.parquet"
+                    Key=self.FACT_RUL_PATH  # "inspection/fact_inspection_rul/fact_inspection_rul.parquet"
                 )
             logger.success("Service API : Archivage incrémental validé dans le Data Lake Gold.")
 

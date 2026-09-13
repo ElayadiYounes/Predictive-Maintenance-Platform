@@ -23,7 +23,7 @@ class NotificationService:
             MAIL_STARTTLS=settings.SMTP_TLS,
             MAIL_SSL_TLS=False,
             USE_CREDENTIALS=True,
-            VALIDATE_CERTS=True
+            VALIDATE_CERTS=False
         )
 
         self.team_email = settings.MAINTENANCE_TEAM_EMAIL
