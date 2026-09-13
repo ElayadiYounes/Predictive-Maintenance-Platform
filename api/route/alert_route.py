@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from typing import list
+from typing import List
 
 from jobs.common.logger import logger
 from api.schema.alert_schema import MaintenanceAlertResponse
@@ -31,7 +31,7 @@ async def process_and_send_new_alerts():
     notification_service = NotificationService()
 
     # 1. Extraction du delta des alertes non traitées
-    unnotified_alerts: list[MaintenanceAlertResponse] = alert_service.get_unnotified_alerts()
+    unnotified_alerts: List[MaintenanceAlertResponse] = alert_service.get_unnotified_alerts()
 
     if not unnotified_alerts:
         logger.info("API HTTP : Aucun delta détecté. Toutes les alertes ont déjà été envoyées.")

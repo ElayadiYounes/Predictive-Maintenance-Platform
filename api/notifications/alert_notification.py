@@ -1,5 +1,5 @@
 import requests
-from fastapi_mail import FastAPIMail, MessageSchema, ConnectionConfig, MessageType
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 
 from jobs.common.logger import logger
 from jobs.common.config import settings
@@ -29,7 +29,7 @@ class NotificationService:
         self.team_email = settings.MAINTENANCE_TEAM_EMAIL
         # On garde l'attribut optionnel au cas où on ajoute Slack plus tard
         self.slack_webhook_url = getattr(settings, "SLACK_WEBHOOK_URL", None)
-        self.fm = FastAPIMail(self.mail_config)
+        self.fm = FastMail(self.mail_config)
 
     async def _send_email_async(self, subject: str, html_body: str) -> bool:
         """ Exploite la puissance asynchrone de fastapi-mail pour envoyer l'e-mail. """
