@@ -39,40 +39,60 @@ class MaintenanceDecisionEngine:
         rul = row["predicted_rul"]
 
         # ==================================================================
-        # ZONE ROUGE : URGENCE CRITIQUE 🚨 (Peu importe le statut, si RUL <= 2 jours)
+        # ZONE ROUGE : URGENCE CRITIQUE 🚨 #
+        # Une alerte métier forte est présente et le RUL est inférieur # ou égal à 2 jours.
         # ==================================================================
-        if rul <= 2 and status in ("validated_anomaly", "threshold_alert_only", "ml_anomaly_only"):
+        if rul <= 2 and status in ("validated_anomaly", "threshold_alert_only"):
             return {
                 "decision_priority": "CRITIQUE",
-                "prescribed_action": "Arrêt d'urgence requis sous 48h. Remplacement ou réparation immédiate de l'organe défaillant."
+                "prescribed_action": "Intervention urgente requise sous 48h. Vérifier immédiatement l'état de l'organe concerné et préparer son remplacement ou sa réparation."
             }
 
         # ==================================================================
-        # ZONE ORANGE : PRIORITÉ HAUTE ⚠️ (Danger à court terme 3-7 jours ou anomalie lourde)
+        # ZONE ORANGE : PRIORITÉ HAUTE ⚠️ #
+        # 1. Anomalie prédictive ML seule mais RUL <= 2 jours :
+        # intervention immédiate, sans prescrire automatiquement
+        # un arrêt d'urgence sur le seul signal ML. #
+        # 2. Alerte métier ou anomalie validée avec RUL entre 3 et 7 jours. #
+        # 3. Anomalie validée avec RUL > 7 jours :
+        # anomalie suffisamment forte pour rester prioritaire.
         # ==================================================================
-        elif (status == "validated_anomaly" and 3 <= rul <= 7) or (
-                status == "threshold_alert_only" and 3 <= rul <= 7) or (status == "validated_anomaly" and rul > 7):
+        elif rul <= 2 and status == "ml_anomaly_only" :
             return {
                 "decision_priority": "HAUTE",
-                "prescribed_action": "Planifier une intervention de maintenance préventive (vérification alignement, mécanique) sous 5 jours."
+                "prescribed_action": "RUL très court détecté par l'IA. Réaliser une inspection technique immédiate et préparer une intervention de maintenance."
+            }
+
+        elif 3 <= rul <= 7 and status in ("validated_anomaly", "threshold_alert_only") :
+            return {
+                "decision_priority": "HAUTE",
+                "prescribed_action": "Planifier une intervention de maintenance préventive sous 5 jours : vérification de l'alignement, de l'état mécanique et du graissage."
+            }
+
+        elif rul > 7 and status == "validated_anomaly" :
+            return {
+                "decision_priority": "HAUTE",
+                "prescribed_action": "Anomalie validée détectée. Planifier une intervention de maintenance préventive et effectuer une vérification mécanique approfondie."
             }
 
         # ==================================================================
-        # ZONE JAUNE : PRIORITÉ MOYENNE ⏳ (Signaux IA ou dérives à moyen/long terme)
+        # ZONE JAUNE : PRIORITÉ MOYENNE ⏳
+        # Anomalie détectée uniquement par l'IA avec un horizon supérieur  à 2 jours.
         # ==================================================================
-        elif status == "ml_anomaly_only" and rul >= 3:
+        elif status == "ml_anomaly_only" and rul > 2:
             return {
                 "decision_priority": "MOYENNE",
-                "prescribed_action": "Dérive suspecte détectée par l'IA. Programmer une inspection visuelle lors de la prochaine ronde technique."
+                "prescribed_action": "Dérive suspecte détectée par l'IA. Programmer une inspection visuelle et technique lors de la prochaine ronde de maintenance."
             }
 
         # ==================================================================
-        # ZONE BLEUE : PRIORITÉ FAIBLE 🔍 (Alerte de seuil isolée sans dérive stable)
+        # ZONE BLEUE : PRIORITÉ FAIBLE 🔍
+        # Pic de seuil isolé avec un horizon supérieur à 7 jours.
         # ==================================================================
         elif status == "threshold_alert_only" and rul > 7:
             return {
                 "decision_priority": "FAIBLE",
-                "prescribed_action": "Alerte de seuil isolée sans dérive globale stable. Placer l'équipement sous surveillance vibratoire renforcée."
+                "prescribed_action": "Alerte de seuil isolée sans dérive globale confirmée. Placer l'équipement sous surveillance renforcée et vérifier l'évolution des paramètres."
             }
 
         # ==================================================================
