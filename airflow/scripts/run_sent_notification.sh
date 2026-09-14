@@ -7,7 +7,11 @@ set -e
 echo "📡 [Airflow] Appel de l'API FastAPI pour l'envoi des e-mails d'alertes..."
 
 # Requête POST vers votre route de distribution des alertes
-curl -X POST "http://localhost:8000/api/alerts/process-and-send" \
+docker compose \
+ --env-file .env.dev\
+  -f docker-compose.dev.yml \
+  exec -T api \
+  curl -X POST "http://localhost:8000/api/alerts/process-and-send" \
      -H "accept: application/json" \
      -H "Content-Type: application/json"
 

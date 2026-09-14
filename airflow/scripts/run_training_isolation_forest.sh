@@ -8,7 +8,11 @@ set -e
 
 echo "[Airflow] Démarrage du ré-entraînement  de l'Isolation Forest..."
 
-python /opt/jobs/ml/run_isolation_forest.py
+docker compose \
+    --env-file .env.dev \
+    -f docker-compose.dev.yml \
+    exec -T ml \
+    python /app/jobs/ml/run_isolation_forest.py
 
 echo "[Airflow] Entraînement Isolation Forest terminé avec succès."
 
