@@ -1,6 +1,7 @@
 from io import BytesIO
 import pandas as pd
 import joblib
+from datetime import datetime, timezone
 
 from jobs.common.logger import logger
 from jobs.common.config import settings
@@ -165,6 +166,15 @@ class IncrementalInferencePipeline:
         # Validation : Génération automatique de threshold_alert, validated_anomaly, anomaly_status
         df_anomaly_final = self.anomaly_validator.validate(df_anomaly_consolidated)
 
+        if "model_name" not in df_anomaly_final.columns:
+            df_anomaly_results["model_name"] = "isolation_forest"
+
+        if "model_version" not in df_anomaly_final.columns:
+            df_anomaly_results["model_version"] = "v1"
+
+        if "prediction_date" not in df_anomaly_final.columns:
+            df_anomaly_results["prediction_date"] = datetime.now(timezone.utc)
+
         # ==================================================================
         # B. PIPELINE 2 : Prédiction de la RUL (XGBoost Regressor)
         # ==================================================================
@@ -257,6 +267,12 @@ class IncrementalInferencePipeline:
         df_final_production_rul = self.decision_engine.process_decisions(
             df_rul_predictions_with_context
         )
+
+        if "model_version" not in df_final_production_rul.columns:
+            df_final_production_rul["model_version"] = "v1"
+
+        if "prediction_date" not in df_final_production_rul.columns:
+            df_final_production_rul["prediction_date"] = datetime.now(timezone.utc)
 
 
         return df_anomaly_final, df_final_production_rul
