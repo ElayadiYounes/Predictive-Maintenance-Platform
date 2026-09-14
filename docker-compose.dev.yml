@@ -203,6 +203,7 @@ services:
     volumes:
       - airflow_logs:/opt/airflow/logs
       - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/scripts:/opt/airflow/scripts
 
     command: webserver
 
@@ -261,7 +262,7 @@ services:
       - ./airflow/dags:/opt/airflow/dags
 
       - ./jobs:/opt/airflow/jobs
-
+      - ./airflow/scripts:/opt/airflow/scripts
       - airflow_logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
 
