@@ -32,22 +32,22 @@ with DAG(
 
     task_silver = BashOperator(
         task_id="run_silver_transformation",
-        bash_command="/opt/airflow/scripts/run_silver.sh",
+        bash_command="/opt/airflow/scripts/run_bronze_to_silver.sh",
     )
 
     task_gold = BashOperator(
         task_id="run_gold_modeling",
-        bash_command="/opt/airflow/scripts/run_gold.sh",
+        bash_command="/opt/airflow/scripts/run_silver_to_gold.sh",
     )
 
     task_ml_inference = BashOperator(
         task_id="run_ml_inference",
-        bash_command="/opt/airflow/scripts/run_ml_inference.sh",
+        bash_command="/opt/airflow/scripts/run_predict_new_data.sh",
     )
 
     task_notifications = BashOperator(
         task_id="run_api_notifications",
-        bash_command="/opt/airflow/scripts/run_notifications.sh",
+        bash_command="/opt/airflow/scripts/run_sent_notification.sh",
     )
 
     # Définition de l'enchaînement strict (Pipeline Data de Production)
