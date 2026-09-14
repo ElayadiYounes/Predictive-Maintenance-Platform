@@ -265,6 +265,7 @@ services:
       - ./airflow/scripts:/opt/airflow/scripts
       - airflow_logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
+      - /var/run/docker.sock:/var/run/docker.sock
 
     command: scheduler
 

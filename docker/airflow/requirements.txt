@@ -1,7 +1,7 @@
 
 # Airflow Providers
 # ===================================
-apache-airflow-providers-apache-spark==4.7.1
+#apache-airflow-providers-apache-spark==4.7.1
 apache-airflow-providers-amazon==8.19.0
 
 # AWS / MinIO
