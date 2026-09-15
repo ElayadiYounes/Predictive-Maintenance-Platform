@@ -60,6 +60,5 @@ with DAG(
     task_train_rul.template_ext = ()
 
     # Le pipeline extrait et prépare d'abord l'ensemble des données d'historique,
-    # puis lance l'entraînement des deux modèles d'IA en parallèle.
+    task_history_ingestion >> task_history_silver >> task_history_gold >> task_train_anomaly >> task_train_rul
 
-    task_history_ingestion >> task_history_silver >> task_history_gold >> [task_train_anomaly, task_train_rul]
