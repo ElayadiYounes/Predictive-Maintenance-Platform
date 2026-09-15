@@ -27,32 +27,37 @@ with DAG(
     # --- ÉTAPE 1 : Ingestion complète de l'historique depuis la DB ---
     task_history_ingestion = BashOperator(
         task_id="run_bronze_history_ingestion",
-        bash_command="/opt/airflow/scripts/run_ingestion.sh",
+        bash_command="bash /opt/airflow/scripts/run_ingestion.sh",
     )
+    task_history_ingestion.template_ext = ()
 
     # --- ÉTAPE 2 : Nettoyage et typage distribué de l'historique complet ---
     task_history_silver = BashOperator(
         task_id="run_silver_history_transformation",
-        bash_command="/opt/airflow/scripts/run_bronze_to_silver.sh",
+        bash_command="bash /opt/airflow/scripts/run_bronze_to_silver.sh",
     )
+    task_history_silver.template_ext = ()
 
     # --- ÉTAPE 3 : Reconstruction et agrégation des tables Gold globales ---
     task_history_gold = BashOperator(
         task_id="run_gold_history_modeling",
-        bash_command="/opt/airflow/scripts/run_silver_to_gold.sh",
+        bash_command="bash /opt/airflow/scripts/run_silver_to_gold.sh",
     )
+    task_history_gold.template_ext = ()
 
     # --- ÉTAPE 4A : Ré-entraînement Isolation Forest (Algorithme Python Pur) ---
     task_train_anomaly = BashOperator(
         task_id="train_isolation_forest",
-        bash_command="/opt/airflow/scripts/run_training_isolation_forest.sh",
+        bash_command="bash /opt/airflow/scripts/run_training_isolation_forest.sh",
     )
+    task_train_anomaly.template_ext = ()
 
     # --- ÉTAPE 4B : Ré-entraînement XGBoost RUL (Algorithme Python Pur) ---
     task_train_rul = BashOperator(
         task_id="train_xgboost_rul",
-        bash_command="/opt/airflow/scripts/run_training_xgboost.sh",
+        bash_command="bash /opt/airflow/scripts/run_training_xgboost.sh",
     )
+    task_train_rul.template_ext = ()
 
     # Le pipeline extrait et prépare d'abord l'ensemble des données d'historique,
     # puis lance l'entraînement des deux modèles d'IA en parallèle.
