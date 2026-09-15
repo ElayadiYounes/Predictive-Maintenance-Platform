@@ -6,6 +6,8 @@ set -e
 
 echo "📡 [Airflow] Appel de l'API FastAPI pour l'envoi des e-mails d'alertes..."
 
+cd /opt/airflow/
+
 # Requête POST vers votre route de distribution des alertes
 docker compose \
  --env-file .env.dev\

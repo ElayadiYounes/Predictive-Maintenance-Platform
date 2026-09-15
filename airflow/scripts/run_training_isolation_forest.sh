@@ -8,6 +8,8 @@ set -e
 
 echo "[Airflow] Démarrage du ré-entraînement  de l'Isolation Forest..."
 
+cd /opt/airflow/
+
 docker compose \
     --env-file .env.dev \
     -f docker-compose.dev.yml \

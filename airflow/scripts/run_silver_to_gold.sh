@@ -6,6 +6,8 @@ set -e
 
 echo "⏳ [Airflow] Lancement de la transformation Silver → Gold..."
 
+cd /opt/airflow/
+
 # Exécution de votre script de modélisation Gold (ajustez le nom du script si nécessaire)
 docker compose --env-file .env.dev -f docker-compose.dev.yml exec -T spark-master spark-submit \
   --master spark://spark-master:7077 \

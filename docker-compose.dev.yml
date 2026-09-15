@@ -260,12 +260,12 @@ services:
     volumes:
 
       - ./airflow/dags:/opt/airflow/dags
-
-      - ./jobs:/opt/airflow/jobs
       - ./airflow/scripts:/opt/airflow/scripts
       - airflow_logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./.env.dev:/opt/airflow/.env.dev:ro
+      - ./docker-compose.dev.yml:/opt/airflow/docker-compose.dev.yml:ro
 
     command: scheduler
 

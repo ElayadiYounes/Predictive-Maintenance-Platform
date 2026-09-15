@@ -6,6 +6,8 @@ set -e
 
 echo "⏳ [Airflow] Lancement de la transformation Bronze → Silver..."
 
+cd /opt/airflow
+
 docker compose --env-file .env.dev -f docker-compose.dev.yml exec -T spark-master spark-submit \
   --master spark://spark-master:7077 \
   --deploy-mode client \

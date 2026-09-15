@@ -8,6 +8,8 @@ set -e
 
 echo "⏳ [Airflow] Déclenchement de l'extraction des inspections..."
 
+cd /opt/airflow/
+
 # Exécution non-interactive directe du script Python dans le conteneur
 docker compose \
     --env-file .env.dev \
