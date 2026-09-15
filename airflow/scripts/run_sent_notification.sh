@@ -13,7 +13,7 @@ docker compose \
  --env-file .env.dev\
   -f docker-compose.dev.yml \
   exec -T api \
-  curl -X POST "http://localhost:8000/api/alerts/process-and-send" \
+  curl -X POST "http://localhost:8000/api/v1/alerts/process-notifications" \
      -H "accept: application/json" \
      -H "Content-Type: application/json"
 
